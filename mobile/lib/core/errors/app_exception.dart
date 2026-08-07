@@ -28,7 +28,7 @@ class UnauthorizedException extends AppException {
 }
 
 class ConflictException extends AppException {
-  const ConflictException(String message) : super(message, statusCode: 409);
+  const ConflictException(super.message) : super(statusCode: 409);
 }
 
 class ServerException extends AppException {
