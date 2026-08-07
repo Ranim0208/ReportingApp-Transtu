@@ -47,7 +47,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       appBar: AppBar(
         title: Text(
           state.result?.reference ?? 'Suivi',
-          style: AppTextStyles.heading,
+          style: AppTextStyles.h2,
         ),
         backgroundColor: AppColors.surface,
         elevation: 0,
@@ -112,7 +112,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                       children: [
                         Text(
                           _statusLabel(result.statusCode),
-                          style: AppTextStyles.heading.copyWith(
+                          style: AppTextStyles.h2.copyWith(
                             color: Colors.white,
                             fontSize: 24,
                           ),
@@ -171,7 +171,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   const SizedBox(height: 16),
 
                   // Replies
-                  Text('Réponses de Transtu', style: AppTextStyles.heading),
+                  Text('Réponses de Transtu', style: AppTextStyles.h2),
                   const SizedBox(height: 12),
 
                   if (result.replies.isEmpty)

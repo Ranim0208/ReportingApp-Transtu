@@ -79,7 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       children: [
         Text(
           'TRANSTU',
-          style: AppTextStyles.heading.copyWith(
+          style: AppTextStyles.h2.copyWith(
             color: AppColors.primary,
             letterSpacing: 2,
           ),
@@ -129,7 +129,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           BoxShadow(
             blurRadius: 16,
             offset: const Offset(0, 4),
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
           ),
         ],
       ),
@@ -140,7 +140,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             isLoggedIn
                 ? 'Bonjour, ${authState.passenger!.name.split(' ').first} 👋'
                 : 'Bienvenue sur Transtu',
-            style: AppTextStyles.heading.copyWith(color: Colors.white),
+            style: AppTextStyles.h2.copyWith(color: Colors.white),
           ),
           const SizedBox(height: 8),
           Text(
@@ -220,7 +220,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Mes signalements récents', style: AppTextStyles.heading),
+        Text('Mes signalements récents', style: AppTextStyles.h2),
         const SizedBox(height: 12),
         ..._recentReports.take(3).map((report) {
           return _RecentReportTile(
@@ -272,7 +272,7 @@ class _ActionCard extends StatelessWidget {
             BoxShadow(
               blurRadius: 16,
               offset: const Offset(0, 4),
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
             ),
           ],
         ),
@@ -286,7 +286,7 @@ class _ActionCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTextStyles.heading.copyWith(
+                    style: AppTextStyles.h2.copyWith(
                       fontSize: 16,
                       color: textColor,
                     ),
@@ -295,7 +295,7 @@ class _ActionCard extends StatelessWidget {
                   Text(
                     description,
                     style: AppTextStyles.body.copyWith(
-                      color: textColor.withOpacity(0.7),
+                      color: textColor.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -303,7 +303,7 @@ class _ActionCard extends StatelessWidget {
             ),
             Icon(
               Icons.arrow_forward_ios,
-              color: textColor.withOpacity(0.5),
+              color: textColor.withValues(alpha: 0.5),
               size: 16,
             ),
           ],

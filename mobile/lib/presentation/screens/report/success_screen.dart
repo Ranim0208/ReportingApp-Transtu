@@ -78,7 +78,7 @@ class SuccessScreen extends StatelessWidget {
                     BoxShadow(
                       blurRadius: 16,
                       offset: const Offset(0, 4),
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                     ),
                   ],
                 ),
@@ -115,7 +115,7 @@ class SuccessScreen extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.1),
+                          color: AppColors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

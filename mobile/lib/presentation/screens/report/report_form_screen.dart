@@ -363,7 +363,7 @@ class _Step1Categories extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Quel type de problème ?', style: AppTextStyles.heading),
+          Text('Quel type de problème ?', style: AppTextStyles.h2),
           const SizedBox(height: 16),
           Expanded(
             child: GridView.builder(
@@ -412,7 +412,7 @@ class _CategoryCard extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.08)
+              ? AppColors.primary.withValues(alpha: 0.08)
               : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -468,7 +468,7 @@ class _Step2Details extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Décrivez le problème', style: AppTextStyles.heading),
+          Text('Décrivez le problème', style: AppTextStyles.h2),
           const SizedBox(height: 16),
           TextField(
             controller: descriptionController,
@@ -499,7 +499,7 @@ class _Step2Details extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.1),
+                color: AppColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -616,7 +616,7 @@ class _Step3Contact extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Vos coordonnées', style: AppTextStyles.heading),
+          Text('Vos coordonnées', style: AppTextStyles.h2),
           const SizedBox(height: 4),
           Text(
             'Optionnel — votre email permet de suivre votre signalement',
@@ -668,7 +668,7 @@ class _Step3Contact extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.06),
+                color: AppColors.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(

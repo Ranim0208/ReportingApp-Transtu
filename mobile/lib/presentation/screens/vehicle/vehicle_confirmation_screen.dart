@@ -63,7 +63,7 @@ class VehicleConfirmationScreen extends StatelessWidget {
                   BoxShadow(
                     blurRadius: 16,
                     offset: const Offset(0, 4),
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                   ),
                 ],
               ),
@@ -74,7 +74,7 @@ class VehicleConfirmationScreen extends StatelessWidget {
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -85,7 +85,7 @@ class VehicleConfirmationScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  Text(label, style: AppTextStyles.heading),
+                  Text(label, style: AppTextStyles.h2),
                   const SizedBox(height: 4),
                   Text(
                     reference,
@@ -100,7 +100,7 @@ class VehicleConfirmationScreen extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(

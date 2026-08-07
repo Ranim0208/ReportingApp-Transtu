@@ -119,7 +119,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(passenger.name, style: AppTextStyles.heading),
+                Text(passenger.name, style: AppTextStyles.h2),
                 Text(
                   passenger.email,
                   style: AppTextStyles.caption,
@@ -167,8 +167,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             if (_recentReports.isNotEmpty) ...[
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Mes signalements récents',
-                    style: AppTextStyles.heading),
+                child:
+                    Text('Mes signalements récents', style: AppTextStyles.h2),
               ),
               const SizedBox(height: 12),
               ..._recentReports.take(5).map((report) {

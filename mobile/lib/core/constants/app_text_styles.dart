@@ -5,33 +5,93 @@ import 'app_colors.dart';
 class AppTextStyles {
   AppTextStyles._();
 
+  // ── Display ───────────────────────────────────────────────────────────────
   static TextStyle get display => GoogleFonts.plusJakartaSans(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
+        fontSize: 26,
+        fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
+        height: 1.2,
       );
 
-  static TextStyle get heading => GoogleFonts.plusJakartaSans(
-        fontSize: 20,
+  // ── Headings ──────────────────────────────────────────────────────────────
+  static TextStyle get h1 => GoogleFonts.plusJakartaSans(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+        height: 1.3,
+      );
+
+  static TextStyle get h2 => GoogleFonts.plusJakartaSans(
+        fontSize: 18,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
+        height: 1.3,
+      );
+
+  static TextStyle get h3 => GoogleFonts.plusJakartaSans(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        height: 1.4,
+      );
+
+  // ── Body ──────────────────────────────────────────────────────────────────
+  static TextStyle get bodyLarge => GoogleFonts.inter(
+        fontSize: 15,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textPrimary,
+        height: 1.5,
       );
 
   static TextStyle get body => GoogleFonts.inter(
         fontSize: 14,
-        fontWeight: FontWeight.normal,
+        fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
+        height: 1.5,
       );
 
+  static TextStyle get bodySmall => GoogleFonts.inter(
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textSecondary,
+        height: 1.5,
+      );
+
+  // ── Caption ───────────────────────────────────────────────────────────────
   static TextStyle get caption => GoogleFonts.inter(
         fontSize: 12,
-        fontWeight: FontWeight.normal,
+        fontWeight: FontWeight.w400,
         color: AppColors.textSecondary,
+        height: 1.4,
       );
 
+  // ── Button ────────────────────────────────────────────────────────────────
   static TextStyle get button => GoogleFonts.inter(
         fontSize: 15,
         fontWeight: FontWeight.w600,
         color: AppColors.surface,
+        height: 1,
+      );
+
+  static TextStyle get buttonSmall => GoogleFonts.inter(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: AppColors.surface,
+        height: 1,
+      );
+
+  // ── Label ─────────────────────────────────────────────────────────────────
+  static TextStyle get label => GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textSecondary,
+        letterSpacing: 0.3,
+      );
+
+  // ── Monospace ─────────────────────────────────────────────────────────────
+  static TextStyle get mono => GoogleFonts.sourceCodePro(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
       );
 }
