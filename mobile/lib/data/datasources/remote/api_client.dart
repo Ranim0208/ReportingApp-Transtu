@@ -80,8 +80,7 @@ class ApiClient {
     required String? passengerPhone,
     List<String>? filePaths,
   }) async {
-    // Build the JSON part — MUST have content-type application/json
-    final reportJson = {
+    final reportJson = jsonEncode({
       'supportUuid': supportUuid,
       'reportTypeId': reportTypeId,
       'description': description,
@@ -90,18 +89,18 @@ class ApiClient {
         if (passengerEmail != null) 'email': passengerEmail,
         if (passengerPhone != null) 'phoneNumber': passengerPhone,
       },
-    };
+    });
 
-    final formData = FormData();
-
-    // Critical: the "report" part must declare application/json explicitly
-    formData.fields.add(MapEntry(
-      'report',
-      jsonEncode(reportJson),
-    ));
+    final formData = FormData.fromMap({
+      // Critical: content-type must be application/json for Spring @RequestPart
+      'report': MultipartFile.fromString(
+        reportJson,
+        contentType: DioMediaType('application', 'json'),
+      ),
+    });
 
     // Attach files if any
-    if (filePaths != null) {
+    if (filePaths != null && filePaths.isNotEmpty) {
       for (final path in filePaths) {
         formData.files.add(MapEntry(
           'files',
@@ -113,18 +112,10 @@ class ApiClient {
     final response = await _dio.post(
       '/api/public/signalements',
       data: formData,
-      options: Options(
-        contentType: 'multipart/form-data',
-        headers: {
-          // Override per-request: multipart needs boundary, not application/json
-          'Content-Type': 'multipart/form-data',
-        },
-      ),
     );
 
     return _unwrap(response);
   }
-
   // ── Tracking ──────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> trackReport(String uuid) async {
