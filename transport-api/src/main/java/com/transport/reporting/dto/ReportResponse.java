@@ -35,4 +35,10 @@ public class ReportResponse {
     private StatusResponse status;
     /** Pièces jointes associées (renseignées sur détail / création / suivi). */
     private List<AttachmentResponse> attachments;
+    /** Indique si l'e-mail de confirmation a été envoyé avec succès (création uniquement). */
+    private Boolean emailSent;
+    /** Message explicatif du résultat d'envoi de l'e-mail (succès ou échec). */
+    private String emailMessage;
+    /** Code d'erreur métier optionnel si l'envoi de l'e-mail a échoué (ex. EMAIL_SMTP_AUTH). */
+    private String emailErrorCode;
 }

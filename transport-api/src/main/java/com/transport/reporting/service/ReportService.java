@@ -1,14 +1,15 @@
 package com.transport.reporting.service;
-
 import com.transport.reporting.common.dto.SearchRequest;
 import com.transport.reporting.common.enums.AuditAction;
 import com.transport.reporting.common.enums.AuditModule;
+import com.transport.reporting.common.enums.AuditResult;
 import com.transport.reporting.common.enums.Priority;
 import com.transport.reporting.common.enums.SupportStatus;
 import com.transport.reporting.common.response.PageResponse;
 import com.transport.reporting.common.util.AuditActors;
 import com.transport.reporting.common.util.PageableUtils;
 import com.transport.reporting.dto.AuditLogEvent;
+import com.transport.reporting.dto.EmailSendResult;
 import com.transport.reporting.dto.ReportCriteria;
 import com.transport.reporting.dto.ReportRequest;
 import com.transport.reporting.dto.ReportResponse;
@@ -30,25 +31,28 @@ import com.transport.reporting.repository.UserRepository;
 import com.transport.reporting.security.SecurityUtils;
 import com.transport.reporting.specification.ReportSpecification;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-
 /**
  * Service métier Signalement (création publique, recherche admin, détail).
  */
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class ReportService {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -72,6 +76,8 @@ public class ReportService {
     private final AttachmentService attachmentService;
     private final FileStorageService fileStorageService;
     private final AuditLogService auditLogService;
+    private final EmailService emailService;
+    private final ReportConfirmationEmailComposer reportConfirmationEmailComposer;
 
     /**
      * Crée un signalement sans pièce jointe (compatibilité appels internes / JSON pur).
@@ -89,7 +95,7 @@ public class ReportService {
      * @param request données métier du signalement
      * @param files   fichiers multipart optionnels (max 5)
      */
-    public ReportResponse create(ReportRequest request, MultipartFile[] files) {
+public ReportResponse create(ReportRequest request, MultipartFile[] files) {
         // Valider les fichiers avant toute persistence
         fileStorageService.validateBatch(files);
 
@@ -110,8 +116,7 @@ public class ReportService {
                 .priority(Priority.MEDIUM)
                 .publish(request.getPublish() != null ? request.getPublish() : Boolean.FALSE)
                 .publishDate(request.getPublishDate())
-                .sendEmail(request.getSendEmail() != null ? request.getSendEmail() : Boolean.FALSE)
-                .sendEmailDate(request.getSendEmailDate())
+                .sendEmail(Boolean.FALSE)
                 .publicResponse(request.getPublicResponse() != null ? request.getPublicResponse() : Boolean.FALSE)
                 .publicResponseDate(request.getPublicResponseDate())
                 .transportSupport(support)
@@ -139,9 +144,61 @@ public class ReportService {
                 .description("Création publique du signalement " + report.getReference())
                 .build());
 
+        // Envoi automatique de l'e-mail de confirmation contenant le code de suivi,
+        // uniquement si le voyageur a renseigné une adresse e-mail.
+        sendConfirmationEmail(report, response);
+
         return response;
     }
 
+    /**
+     * Envoie l'e-mail de confirmation (avec le lien/UUID de suivi) au voyageur.
+     * N'échoue jamais la création du signalement : le résultat (succès/échec) est
+     * uniquement reporté dans la réponse pour information à l'utilisateur.
+     */
+    private void sendConfirmationEmail(Report report, ReportResponse response) {
+        String passengerEmail = report.getPassenger() != null && StringUtils.hasText(report.getPassenger().getEmail())
+                ? report.getPassenger().getEmail().trim()
+                : null;
+
+        if (passengerEmail == null) {
+            response.setEmailSent(false);
+            response.setEmailMessage("Aucune adresse e-mail renseignée : le lien de suivi n'a pas été envoyé par e-mail.");
+            return;
+        }
+
+        String html = reportConfirmationEmailComposer.buildHtml(report);
+        EmailSendResult result = emailService.sendHtml(passengerEmail, reportConfirmationEmailComposer.subject(), html);
+
+        report.setSendEmail(result.isSuccess());
+        report.setSendEmailDate(result.isSuccess() ? Instant.now() : null);
+        reportRepository.save(report);
+
+        response.setSendEmail(report.getSendEmail());
+        response.setSendEmailDate(report.getSendEmailDate());
+        response.setEmailSent(result.isSuccess());
+        response.setEmailMessage(result.getMessage());
+        response.setEmailErrorCode(result.getErrorCode());
+
+        auditLogService.record(AuditLogEvent.builder()
+                .username("PUBLIC")
+                .actionType(AuditAction.EMAIL_SEND)
+                .module(AuditModule.REPORTS)
+                .entityName("Report")
+                .entityId(String.valueOf(report.getReportId()))
+                .result(result.isSuccess() ? AuditResult.SUCCESS : AuditResult.FAILURE)
+                .newValue("to=" + passengerEmail + ";sentAt=" + Instant.now()
+                        + (result.isSuccess() ? "" : ";error=" + result.getMessage()))
+                .description(result.isSuccess()
+                        ? "E-mail de confirmation envoyé pour " + report.getReference()
+                        : "Échec envoi e-mail de confirmation pour " + report.getReference())
+                .build());
+
+        if (!result.isSuccess()) {
+            log.warn("Échec de l'envoi de l'e-mail de confirmation pour le signalement {} : {}",
+                    report.getReference(), result.getMessage());
+        }
+    }
     /**
      * Met à jour la priorité interne d'un signalement (agents / administrateurs).
      * Trace l'action dans {@code report_history} et le journal d'audit.
