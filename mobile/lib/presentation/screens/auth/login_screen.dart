@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../providers/auth_provider.dart';
 
@@ -28,14 +30,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
     final success = await ref.read(authProvider.notifier).login(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
-
     if (!mounted) return;
-
     if (success) {
       context.go('/home');
     } else {
@@ -54,27 +53,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_rounded,
+              color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.xxl),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Connexion', style: AppTextStyles.display),
-                const SizedBox(height: 8),
+                // Header
+                Text('Connexion', style: AppTextStyles.display)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: 0.1, end: 0),
+
+                const SizedBox(height: AppSpacing.xs),
+
                 Text(
                   'Accédez à vos signalements',
                   style: AppTextStyles.body.copyWith(
                     color: AppColors.textSecondary,
                   ),
-                ),
-                const SizedBox(height: 32),
+                ).animate().fadeIn(duration: 400.ms, delay: 80.ms),
+
+                const SizedBox(height: AppSpacing.xxxl),
 
                 // Email
                 TextFormField(
@@ -82,15 +89,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                     labelText: 'Adresse email',
-                    prefixIcon: Icon(Icons.mail_outline),
+                    prefixIcon: Icon(Icons.mail_outline_rounded, size: 20),
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Email requis.';
                     if (!v.contains('@')) return 'Email invalide.';
                     return null;
                   },
-                ),
-                const SizedBox(height: 16),
+                ).animate().fadeIn(duration: 400.ms, delay: 120.ms),
+
+                const SizedBox(height: AppSpacing.md),
 
                 // Password
                 TextFormField(
@@ -98,24 +106,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Mot de passe',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    prefixIcon:
+                        const Icon(Icons.lock_outline_rounded, size: 20),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
+                        size: 20,
+                        color: AppColors.textSecondary,
                       ),
-                      onPressed: () => setState(
-                        () => _obscurePassword = !_obscurePassword,
-                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Mot de passe requis.';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 32),
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Mot de passe requis.' : null,
+                ).animate().fadeIn(duration: 400.ms, delay: 160.ms),
+
+                const SizedBox(height: AppSpacing.xxxl),
 
                 // Submit
                 ElevatedButton(
@@ -130,15 +139,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         )
                       : const Text('Se connecter'),
-                ),
-                const SizedBox(height: 12),
+                ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
 
-                // Continue as guest
+                const SizedBox(height: AppSpacing.md),
+
+                // Guest
                 OutlinedButton(
                   onPressed: () => context.pop(),
                   child: const Text('Continuer sans compte'),
-                ),
-                const SizedBox(height: 24),
+                ).animate().fadeIn(duration: 400.ms, delay: 240.ms),
+
+                const SizedBox(height: AppSpacing.xxl),
 
                 // Register link
                 Center(
@@ -162,7 +173,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ),
-                ),
+                ).animate().fadeIn(duration: 400.ms, delay: 280.ms),
               ],
             ),
           ),
