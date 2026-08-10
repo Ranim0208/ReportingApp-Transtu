@@ -8,5 +8,5 @@ Le développement est actuellement actif sur la branche **`develop`**.
 
 ## En cours
 
-- 📍 Ajout de la fonctionnalité **GPS** (géolocalisation lors du signalement)
-- 🐞 Correction de l'**affichage des erreurs** (Error displaying)
+- Ajout de la fonctionnalité **GPS** (géolocalisation lors du signalement)
+- Correction de l'**affichage des erreurs** (Error displaying)
