@@ -123,6 +123,11 @@ class ApiClient {
     return _unwrap(response);
   }
 
+  Future<List<dynamic>> getMyReports() async {
+  final response = await _dio.get('/api/public/passenger/my-reports');
+  return _unwrapList(response);
+}
+
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   /// Unwraps { "success": true, "data": {...} } → returns data map
