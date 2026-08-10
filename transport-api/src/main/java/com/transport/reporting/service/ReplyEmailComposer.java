@@ -38,6 +38,7 @@ public class ReplyEmailComposer {
                 : "";
         String messageHtml = escapeHtml(reply.getMessage()).replace("\n", "<br/>");
         String reference = escapeHtml(report.getReference());
+        String uuid = escapeHtml(report.getUuid().toString());
 
         return """
                 <!DOCTYPE html>
@@ -62,6 +63,10 @@ public class ReplyEmailComposer {
                             </p>
                             <p style="margin:0 0 8px;"><strong>Référence :</strong> %s</p>
                             <p style="margin:0 0 16px;"><strong>Date de réponse :</strong> %s</p>
+                            <div style="background:#f8faf9;border:1px dashed #0b5c3b;border-radius:6px;padding:10px 14px;margin:0 0 16px;">
+                              <p style="margin:0 0 4px;font-size:12px;color:#6b7280;">Code de suivi (à copier dans l'application, écran "Suivre un signalement") :</p>
+                              <p style="margin:0;font-family:'Courier New',monospace;font-size:14px;font-weight:bold;color:#0b5c3b;word-break:break-all;">%s</p>
+                            </div>
                             <div style="background:#f8faf9;border-left:4px solid #0b5c3b;padding:14px 16px;margin:0 0 24px;line-height:1.55;">
                               %s
                             </div>
@@ -87,7 +92,7 @@ public class ReplyEmailComposer {
                   </table>
                 </body>
                 </html>
-                """.formatted(LOGO_CONTENT_ID, reference, escapeHtml(replyDate), messageHtml, trackingUrl, trackingUrl, trackingUrl);
+                """.formatted(LOGO_CONTENT_ID, reference, escapeHtml(replyDate), uuid, messageHtml, trackingUrl, trackingUrl, trackingUrl);
     }
 
     private static String escapeHtml(String value) {
