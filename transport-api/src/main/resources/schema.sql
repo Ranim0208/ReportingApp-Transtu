@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS app_menu;
 DROP TABLE IF EXISTS permission;
 DROP TABLE IF EXISTS role;
 DROP TABLE IF EXISTS app_user;
+DROP TABLE IF EXISTS passenger_token;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -262,4 +263,20 @@ CREATE TABLE audit_log (
     KEY idx_audit_log_result (result),
     CONSTRAINT fk_audit_log_user
         FOREIGN KEY (user_id) REFERENCES app_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS passenger_token (
+    token_id      BIGINT       NOT NULL AUTO_INCREMENT,
+    token         VARCHAR(64)  NOT NULL,
+    token_type    VARCHAR(30)  NOT NULL,   -- EMAIL_VERIFICATION | PASSWORD_RESET
+    passenger_id  BIGINT       NOT NULL,
+    expires_at    DATETIME     NOT NULL,
+    used          TINYINT(1)   NOT NULL DEFAULT 0,
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (token_id),
+    UNIQUE KEY uk_passenger_token (token),
+    KEY idx_token_type (token_type),
+    KEY idx_token_passenger (passenger_id),
+    CONSTRAINT fk_token_passenger
+        FOREIGN KEY (passenger_id) REFERENCES passenger (passenger_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

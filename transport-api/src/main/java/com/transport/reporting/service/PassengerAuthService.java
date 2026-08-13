@@ -23,6 +23,7 @@ public class PassengerAuthService {
     private final PassengerRepository passengerRepository;
     private final PasswordEncoder     passwordEncoder;
     private final JwtService          jwtService;
+    private final PassengerAccountService passengerAccountService;
 
     /**
      * Inscription d'un nouveau voyageur.
@@ -50,7 +51,7 @@ public class PassengerAuthService {
                 .build();
 
         passenger = passengerRepository.save(passenger);
-
+        passengerAccountService.sendVerificationEmail(passenger);                
         String subject = "passenger:" + passenger.getPassengerId();
         String token   = jwtService.generateTokenForSubject(subject);
 
