@@ -5,25 +5,27 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_radius.dart';
+import '../../../data/datasources/remote/api_client.dart';
 import '../../../core/utils/snackbar_helper.dart';
-import '../../providers/auth_provider.dart';
 
-class RegisterScreen extends ConsumerStatefulWidget {
-  const RegisterScreen({super.key});
+class ResetPasswordScreen extends ConsumerStatefulWidget {
+  final String token;
+  const ResetPasswordScreen({super.key, required this.token});
 
   @override
-  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<ResetPasswordScreen> createState() =>
+      _ResetPasswordScreenState();
 }
 
-class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  bool _isLoading = false;
+  bool _success = false;
   int _passwordStrength = 0;
 
   @override
@@ -34,9 +36,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
     super.dispose();
@@ -70,28 +69,38 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final success = await ref.read(authProvider.notifier).register(
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          phoneNumber: _phoneController.text.trim().isEmpty
-              ? null
-              : _phoneController.text.trim(),
+
+    if (widget.token.isEmpty) {
+      SnackbarHelper.showError(context, 'Token invalide.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await ref.read(apiClientProvider).resetPassword(
+            token: widget.token,
+            newPassword: _passwordController.text,
+          );
+      if (mounted)
+        setState(() {
+          _isLoading = false;
+          _success = true;
+        });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        SnackbarHelper.showError(
+          context,
+          'Lien invalide ou expiré. Veuillez en demander un nouveau.',
         );
-    if (!mounted) return;
-    if (success) {
-  // Redirige vers l'écran OTP avec l'email
-  context.go('/verify-email?email=${Uri.encodeComponent(_emailController.text.trim())}');
-} else {
-  final error = ref.read(authProvider).error;
-  SnackbarHelper.showError(
-      context, error ?? 'Erreur lors de l\'inscription.');
-}
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(authProvider).isLoading;
+    if (_success) return const _SuccessScreen();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -112,71 +121,40 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Créer un compte', style: AppTextStyles.display)
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: 0.1, end: 0),
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: AppRadius.large,
+                  ),
+                  child: const Icon(Icons.lock_outline_rounded,
+                      color: AppColors.primary, size: 32),
+                ).animate().fadeIn(duration: 400.ms),
 
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: AppSpacing.xl),
+
+                Text('Nouveau mot de passe', style: AppTextStyles.display)
+                    .animate()
+                    .fadeIn(duration: 400.ms, delay: 80.ms),
+
+                const SizedBox(height: AppSpacing.sm),
 
                 Text(
-                  'Rejoignez Transtu pour suivre vos signalements',
+                  'Choisissez un nouveau mot de passe sécurisé pour votre compte.',
                   style: AppTextStyles.body.copyWith(
                     color: AppColors.textSecondary,
                   ),
-                ).animate().fadeIn(duration: 400.ms, delay: 80.ms),
+                ).animate().fadeIn(duration: 400.ms, delay: 120.ms),
 
                 const SizedBox(height: AppSpacing.xxxl),
 
-                // Name
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom complet',
-                    prefixIcon: Icon(Icons.person_outline_rounded, size: 20),
-                  ),
-                  validator: (v) =>
-                      v == null || v.isEmpty ? 'Nom requis.' : null,
-                ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
-
-                const SizedBox(height: AppSpacing.md),
-
-                // Email
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Adresse email',
-                    prefixIcon: Icon(Icons.mail_outline_rounded, size: 20),
-                  ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Email requis.';
-                    if (!v.contains('@')) return 'Email invalide.';
-                    return null;
-                  },
-                ).animate().fadeIn(duration: 400.ms, delay: 130.ms),
-
-                const SizedBox(height: AppSpacing.md),
-
-                // Phone
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Téléphone (optionnel)',
-                    prefixIcon: Icon(Icons.phone_outlined, size: 20),
-                    prefixText: '+216 ',
-                  ),
-                ).animate().fadeIn(duration: 400.ms, delay: 160.ms),
-
-                const SizedBox(height: AppSpacing.md),
-
-                // Password
+                // New password
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Mot de passe',
+                    labelText: 'Nouveau mot de passe',
                     prefixIcon:
                         const Icon(Icons.lock_outline_rounded, size: 20),
                     suffixIcon: IconButton(
@@ -194,7 +172,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   validator: (v) => v == null || v.length < 8
                       ? 'Minimum 8 caractères.'
                       : null,
-                ).animate().fadeIn(duration: 400.ms, delay: 190.ms),
+                ).animate().fadeIn(duration: 400.ms, delay: 160.ms),
 
                 // Strength bar
                 if (_passwordController.text.isNotEmpty) ...[
@@ -248,51 +226,76 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   validator: (v) => v != _passwordController.text
                       ? 'Les mots de passe ne correspondent pas.'
                       : null,
-                ).animate().fadeIn(duration: 400.ms, delay: 220.ms),
+                ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
 
                 const SizedBox(height: AppSpacing.xxxl),
 
-                // Submit
                 ElevatedButton(
-                  onPressed: isLoading ? null : _submit,
-                  child: isLoading
+                  onPressed: _isLoading ? null : _submit,
+                  child: _isLoading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
+                              color: Colors.white, strokeWidth: 2),
                         )
-                      : const Text('Créer mon compte'),
-                ).animate().fadeIn(duration: 400.ms, delay: 260.ms),
-
-                const SizedBox(height: AppSpacing.xxl),
-
-                Center(
-                  child: GestureDetector(
-                    onTap: () => context.pushReplacement('/login'),
-                    child: RichText(
-                      text: TextSpan(
-                        text: 'Déjà un compte ? ',
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: 'Se connecter',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
+                      : const Text('Réinitialiser le mot de passe'),
+                ).animate().fadeIn(duration: 400.ms, delay: 240.ms),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SuccessScreen extends StatelessWidget {
+  const _SuccessScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xxl),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 88,
+                height: 88,
+                decoration: const BoxDecoration(
+                  color: AppColors.successLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_rounded,
+                    color: AppColors.success, size: 48),
+              ).animate().scale(
+                    begin: const Offset(0, 0),
+                    end: const Offset(1, 1),
+                    duration: 500.ms,
+                    curve: Curves.elasticOut,
+                  ),
+              const SizedBox(height: AppSpacing.xxl),
+              Text('Mot de passe modifié !', style: AppTextStyles.display)
+                  .animate()
+                  .fadeIn(duration: 400.ms, delay: 300.ms),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.',
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ).animate().fadeIn(duration: 400.ms, delay: 380.ms),
+              const SizedBox(height: AppSpacing.xxxl),
+              ElevatedButton(
+                onPressed: () => context.go('/login'),
+                child: const Text('Se connecter'),
+              ).animate().fadeIn(duration: 400.ms, delay: 450.ms),
+            ],
           ),
         ),
       ),

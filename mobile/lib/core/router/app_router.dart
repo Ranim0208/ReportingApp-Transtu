@@ -10,6 +10,9 @@ import '../../presentation/screens/report/success_screen.dart';
 import '../../presentation/screens/tracking/track_entry_screen.dart';
 import '../../presentation/screens/tracking/report_detail_screen.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
+import '../../presentation/screens/auth/verify_email_screen.dart';
+import '../../presentation/screens/auth/forgot_password_screen.dart';
+import '../../presentation/screens/auth/reset_password_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -83,6 +86,27 @@ class AppRouter {
         path: '/profile',
         name: 'profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+  path: '/verify-email',
+  name: 'verify-email',
+  builder: (context, state) {
+    final email = state.uri.queryParameters['email'] ?? '';
+    return VerifyEmailScreen(email: email);
+  },
+),
+      GoRoute(
+        path: '/forgot-password',
+        name: 'forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        name: 'reset-password',
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'] ?? '';
+          return ResetPasswordScreen(token: token);
+        },
       ),
     ],
   );

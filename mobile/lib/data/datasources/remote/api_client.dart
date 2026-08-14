@@ -55,6 +55,50 @@ class ApiClient {
     return _unwrap(response);
   }
 
+Future<void> verifyEmail({
+  required String email,
+  required String code,
+}) async {
+  final response = await _dio.post(
+    '/api/public/auth/verify-email',
+    data: {
+      'email': email,
+      'code':  code,
+    },
+  );
+  _checkSuccess(response);
+}
+
+Future<void> resendVerification(String email) async {
+  final response = await _dio.post(
+    '/api/public/auth/resend-verification',
+    data: {'email': email},
+  );
+  _checkSuccess(response);
+}
+
+  Future<void> forgotPassword(String email) async {
+    final response = await _dio.post(
+      '/api/public/auth/forgot-password',
+      data: {'email': email},
+    );
+    _unwrap(response);
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    final response = await _dio.post(
+      '/api/public/auth/reset-password',
+      data: {
+        'token': token,
+        'newPassword': newPassword,
+      },
+    );
+    _unwrap(response);
+  }
+
   // ── Vehicle ───────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> getVehicleByUuid(String uuid) async {
@@ -124,9 +168,9 @@ class ApiClient {
   }
 
   Future<List<dynamic>> getMyReports() async {
-  final response = await _dio.get('/api/public/passenger/my-reports');
-  return _unwrapList(response);
-}
+    final response = await _dio.get('/api/public/passenger/my-reports');
+    return _unwrapList(response);
+  }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -151,6 +195,16 @@ class ApiClient {
       body['message'] as String? ?? AppStrings.unknownError,
     );
   }
+
+  /// Vérifie juste que success = true, sans extraire data
+void _checkSuccess(Response response) {
+  final body = response.data as Map<String, dynamic>;
+  if (body['success'] != true) {
+    throw AppException(
+      body['message'] as String? ?? AppStrings.unknownError,
+    );
+  }
+}
 }
 
 // ── Auth Interceptor ──────────────────────────────────────────────────────────

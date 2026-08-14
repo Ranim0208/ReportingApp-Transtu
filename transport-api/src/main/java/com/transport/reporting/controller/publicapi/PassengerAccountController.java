@@ -4,6 +4,7 @@ import com.transport.reporting.common.response.ApiResponse;
 import com.transport.reporting.dto.ForgotPasswordRequest;
 import com.transport.reporting.dto.ResendVerificationRequest;
 import com.transport.reporting.dto.ResetPasswordRequest;
+import com.transport.reporting.dto.VerifyEmailRequest;
 import com.transport.reporting.service.PassengerAccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,16 +22,16 @@ public class PassengerAccountController {
     private final PassengerAccountService passengerAccountService;
 
     /**
-     * GET /api/public/auth/verify-email?token=xxx
-     * Vérifie le token et active le compte.
-     */
-    @GetMapping("/verify-email")
-    public ResponseEntity<ApiResponse<Void>> verifyEmail(
-            @RequestParam String token) {
-        passengerAccountService.verifyEmail(token);
-        return ResponseEntity.ok(
-                ApiResponse.ok("Email vérifié avec succès. Vous pouvez maintenant vous connecter.", null));
-    }
+ * POST /api/public/auth/verify-email
+ * Vérifie le code OTP et active le compte.
+ */
+@PostMapping("/verify-email")
+public ResponseEntity<ApiResponse<Void>> verifyEmail(
+        @Valid @RequestBody VerifyEmailRequest request) {
+    passengerAccountService.verifyEmail(request);
+    return ResponseEntity.ok(
+            ApiResponse.ok("Email vérifié avec succès. Vous pouvez maintenant vous connecter.", null));
+}
 
     /**
      * POST /api/public/auth/resend-verification

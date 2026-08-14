@@ -21,14 +21,14 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       final json = await _apiClient.register(
-        name:        name,
-        email:       email,
-        password:    password,
+        name: name,
+        email: email,
+        password: password,
         phoneNumber: phoneNumber,
       );
-      final model     = PassengerAuthResponseModel.fromJson(json);
+      final model = PassengerAuthResponseModel.fromJson(json);
       final passenger = _toEntity(model);
-      await _saveToPrefs(model);
+// Ne pas sauvegarder — email non vérifié
       return Right(passenger);
     } on AppException catch (e) {
       return Left(Failure(e.message));
@@ -44,10 +44,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       final json = await _apiClient.login(
-        email:    email,
+        email: email,
         password: password,
       );
-      final model     = PassengerAuthResponseModel.fromJson(json);
+      final model = PassengerAuthResponseModel.fromJson(json);
       final passenger = _toEntity(model);
       await _saveToPrefs(model);
       return Right(passenger);
@@ -78,19 +78,19 @@ class AuthRepositoryImpl implements AuthRepository {
   Passenger _toEntity(PassengerAuthResponseModel model) {
     return Passenger(
       passengerId: model.passengerId,
-      name:        model.name,
-      email:       model.email,
+      name: model.name,
+      email: model.email,
       phoneNumber: model.phoneNumber,
-      token:       model.token,
+      token: model.token,
     );
   }
 
   Future<void> _saveToPrefs(PassengerAuthResponseModel model) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(AuthStorageKeys.token,       model.token);
-    await prefs.setString(AuthStorageKeys.name,        model.name);
-    await prefs.setString(AuthStorageKeys.email,       model.email);
-    await prefs.setInt   (AuthStorageKeys.passengerId, model.passengerId);
+    await prefs.setString(AuthStorageKeys.token, model.token);
+    await prefs.setString(AuthStorageKeys.name, model.name);
+    await prefs.setString(AuthStorageKeys.email, model.email);
+    await prefs.setInt(AuthStorageKeys.passengerId, model.passengerId);
     if (model.phoneNumber != null) {
       await prefs.setString(AuthStorageKeys.phoneNumber, model.phoneNumber!);
     }

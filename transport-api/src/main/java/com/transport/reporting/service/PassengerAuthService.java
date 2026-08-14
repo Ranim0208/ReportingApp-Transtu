@@ -80,7 +80,9 @@ public class PassengerAuthService {
         if (!passwordEncoder.matches(request.getPassword(), passenger.getPasswordHash())) {
             throw new BusinessException("Email ou mot de passe incorrect.");
         }
-
+        if (!passenger.isEmailVerified()) {
+    throw new BusinessException("EMAIL_NOT_VERIFIED:" + passenger.getEmail());
+}
         if (!passenger.isActive()) {
             throw new BusinessException(
                     "Ce compte a été désactivé. Veuillez contacter le support.");

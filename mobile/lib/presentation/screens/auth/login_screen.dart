@@ -38,8 +38,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (success) {
       context.go('/home');
     } else {
-      final error = ref.read(authProvider).error;
-      SnackbarHelper.showError(context, error ?? 'Erreur de connexion.');
+      final error = ref.read(authProvider).error ?? '';
+      // Détecte le cas email non vérifié
+      debugPrint('ERREUR LOGIN: "$error"');
+      if (error.contains('EMAIL_NOT_VERIFIED')) {
+        // Essaie d'extraire l'email
+        final parts = error.split(':');
+        final email =
+            parts.length > 1 ? parts.last.trim() : _emailController.text.trim();
+        if (mounted) {
+          context.push(
+            '/verify-email?email=${Uri.encodeComponent(email)}',
+          );
+        }
+      } else {
+        SnackbarHelper.showError(
+            context, error.isEmpty ? 'Erreur de connexion.' : error);
+      }
     }
   }
 
@@ -125,6 +140,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ).animate().fadeIn(duration: 400.ms, delay: 160.ms),
 
                 const SizedBox(height: AppSpacing.xxxl),
+
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => context.push('/forgot-password'),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'Mot de passe oublié ?',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
 
                 // Submit
                 ElevatedButton(

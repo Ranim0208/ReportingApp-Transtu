@@ -3,6 +3,7 @@ package com.transport.reporting.service;
 import com.transport.reporting.dto.ForgotPasswordRequest;
 import com.transport.reporting.dto.ResendVerificationRequest;
 import com.transport.reporting.dto.ResetPasswordRequest;
+import com.transport.reporting.dto.VerifyEmailRequest;
 import com.transport.reporting.entity.Passenger;
 import com.transport.reporting.entity.PassengerToken;
 import com.transport.reporting.entity.PassengerToken.TokenType;
@@ -83,49 +84,66 @@ public class PassengerAccountService {
     /**
      * Renvoie un email de vérification à la demande du voyageur.
      */
-    @Transactional
-    public void resendVerification(ResendVerificationRequest request) {
-        final Passenger passenger = passengerRepository
-                .findByEmailIgnoreCase(request.getEmail().trim())
-                .orElseThrow(() -> new BusinessException(
-                        "Aucun compte trouvé avec cet email."));
+@Transactional
+public void resendVerification(ResendVerificationRequest request) {
+    final Passenger passenger = passengerRepository
+            .findByEmailIgnoreCase(request.getEmail().trim())
+            .orElseThrow(() -> new BusinessException(
+                    "Aucun compte trouvé avec cet email."));
 
-        if (passenger.isEmailVerified()) {
-            throw new BusinessException("Cet email est déjà vérifié.");
-        }
-
-        sendVerificationEmail(passenger);
+    // Si déjà vérifié → succès silencieux (pas d'erreur)
+    if (passenger.isEmailVerified()) {
+        log.info("Resend requested but passenger {} already verified — ignoring",
+                passenger.getPassengerId());
+        return;
     }
 
-    /**
-     * Vérifie le token et active le compte voyageur.
-     */
-    @Transactional
-    public void verifyEmail(String token) {
-        final PassengerToken pt = passengerTokenRepository
-                .findByTokenAndTokenType(token, TokenType.EMAIL_VERIFICATION)
-                .orElseThrow(() -> new BusinessException(
-                        "Lien de vérification invalide."));
+    sendVerificationEmail(passenger);
+}
+/**
+ * Vérifie le code OTP et active le compte voyageur.
+ */
+@Transactional
+public void verifyEmail(VerifyEmailRequest request) {
+    // Trouve le voyageur par email
+    final Passenger passenger = passengerRepository
+            .findByEmailIgnoreCase(request.getEmail().trim())
+            .orElseThrow(() -> new BusinessException(
+                    "Aucun compte trouvé avec cet email."));
 
-        if (pt.isExpired()) {
-            throw new BusinessException(
-                    "Ce lien a expiré. Veuillez en demander un nouveau.");
-        }
-        if (pt.isUsed()) {
-            throw new BusinessException(
-                    "Ce lien a déjà été utilisé.");
-        }
-
-        pt.setUsed(true);
-        passengerTokenRepository.save(pt);
-
-        final Passenger passenger = pt.getPassenger();
-        passenger.setEmailVerified(true);
-        passengerRepository.save(passenger);
-
-        log.info("Email verified for passenger {}", passenger.getPassengerId());
+    if (passenger.isEmailVerified()) {
+        throw new BusinessException("Cet email est déjà vérifié.");
     }
 
+    // Trouve le token correspondant au code
+    final PassengerToken pt = passengerTokenRepository
+            .findByTokenAndTokenType(request.getCode(), TokenType.EMAIL_VERIFICATION)
+            .orElseThrow(() -> new BusinessException(
+                    "Code invalide. Vérifiez le code reçu par email."));
+
+    // Vérifie que le token appartient bien à ce voyageur
+    if (!pt.getPassenger().getPassengerId().equals(passenger.getPassengerId())) {
+        throw new BusinessException("Code invalide.");
+    }
+
+    if (pt.isExpired()) {
+        throw new BusinessException(
+                "Ce code a expiré. Veuillez en demander un nouveau.");
+    }
+
+    if (pt.isUsed()) {
+        throw new BusinessException(
+                "Ce code a déjà été utilisé.");
+    }
+
+    pt.setUsed(true);
+    passengerTokenRepository.save(pt);
+
+    passenger.setEmailVerified(true);
+    passengerRepository.save(passenger);
+
+    log.info("Email verified for passenger {}", passenger.getPassengerId());
+}
     // ── Password Reset ────────────────────────────────────────────────────────
 
     /**
@@ -208,9 +226,11 @@ public class PassengerAccountService {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private String generateToken() {
-        final byte[] bytes = new byte[TOKEN_BYTES];
-        new SecureRandom().nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
+    /**
+ * Génère un code OTP numérique à 6 chiffres.
+ */
+private String generateToken() {
+    int code = 100000 + new SecureRandom().nextInt(900000);
+    return String.valueOf(code);
+}
 }
