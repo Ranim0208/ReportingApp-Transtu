@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_spacing.dart';
@@ -11,8 +9,7 @@ import '../../../core/constants/app_shadows.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/my_reports_provider.dart';
-import '../../../data/datasources/remote/api_client.dart';
+import '../../providers/public_reports_provider.dart';
 import '../../widgets/status_badge.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -23,73 +20,40 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  List<Map<String, dynamic>> _guestRecentReports = [];
-
   @override
   void initState() {
     super.initState();
-    _init();
-  }
-
-  Future<void> _init() async {
-    final isLoggedIn = ref.read(authProvider).isLoggedIn;
-    if (isLoggedIn) {
-      // Load from API for authenticated users
-      ref.read(myReportsProvider.notifier).load();
-    } else {
-      // Load from SharedPreferences for guests
-      await _loadGuestReports();
-    }
-  }
-
-  Future<void> _loadGuestReports() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(AuthStorageKeys.recentReports);
-    if (raw != null && mounted) {
-      setState(() {
-        _guestRecentReports =
-            (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
-      });
-    }
-  }
-
-  Future<void> _onRefresh() async {
-    final isLoggedIn = ref.read(authProvider).isLoggedIn;
-    if (isLoggedIn) {
-      await ref.read(myReportsProvider.notifier).load();
-    } else {
-      await _loadGuestReports();
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(publicReportsProvider.notifier).load();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isLoggedIn = authState.isLoggedIn;
-    final myReportsState = ref.watch(myReportsProvider);
+    final publicReportsState = ref.watch(publicReportsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: RefreshIndicator(
           color: AppColors.primary,
-          onRefresh: _onRefresh,
+          onRefresh: () => ref.read(publicReportsProvider.notifier).refresh(),
           child: CustomScrollView(
             slivers: [
-              // ── Header ─────────────────────────────────────────────────
+              // ── Header ───────────────────────────────────────────────────
               SliverToBoxAdapter(
                 child: _HomeHeader(
                   authState: authState,
                   isLoggedIn: isLoggedIn,
-                ).animate().fadeIn(duration: 400.ms).slideY(
-                      begin: -0.1,
-                      end: 0,
-                      duration: 400.ms,
-                      curve: Curves.easeOut,
-                    ),
+                )
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.1, end: 0, curve: Curves.easeOut),
               ),
 
-              // ── Main actions ────────────────────────────────────────────
+              // ── Main actions ──────────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.lg,
@@ -121,8 +85,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     _MainActionCard(
                       icon: Icons.manage_search_rounded,
                       title: 'Suivre un signalement',
-                      description:
-                          'Consultez l\'état de vos signalements en cours',
+                      description: 'Consultez l\'état de votre signalement',
                       isPrimary: false,
                       onTap: () => context.push('/track'),
                     )
@@ -133,7 +96,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
 
-              // ── Guest section ───────────────────────────────────────────
+              // ── Guest section ─────────────────────────────────────────────
               if (!isLoggedIn)
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(
@@ -149,124 +112,87 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
 
-              // ── Recent reports (logged in) ──────────────────────────────
-              if (isLoggedIn) ...[
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.xxl,
-                    AppSpacing.lg,
-                    AppSpacing.sm,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Mes signalements', style: AppTextStyles.h2)
-                            .animate()
-                            .fadeIn(duration: 400.ms, delay: 250.ms),
-                        if (myReportsState.isLoading)
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.primary,
-                            ),
+              // ── Published reports section ─────────────────────────────────
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.xxl,
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Signalements traités',
+                        style: AppTextStyles.h2,
+                      ).animate().fadeIn(duration: 400.ms, delay: 250.ms),
+                      if (publicReportsState.isLoading)
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
                 ),
-                if (myReportsState.error != null)
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: Text(
-                        myReportsState.error!,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.error,
-                        ),
-                      ),
-                    ),
-                  )
-                else if (!myReportsState.isLoading &&
-                    myReportsState.reports.isEmpty)
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: Container(
-                        padding: const EdgeInsets.all(AppSpacing.xl),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: AppRadius.large,
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Column(
-                          children: [
-                            const Icon(
-                              Icons.inbox_outlined,
-                              size: 40,
-                              color: AppColors.textHint,
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              'Aucun signalement pour l\'instant',
-                              style: AppTextStyles.body.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                    ),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, i) {
-                          final report = myReportsState.reports[i];
-                          return _RecentReportTile(
-                            uuid: report.uuid,
-                            reference: report.reference,
-                            creationDate: report.creationDate,
-                            statusCode: report.statusCode ?? 'NEW',
-                            index: i,
-                            onTap: () => context.push(
-                              '/report-detail/${report.uuid}',
-                            ),
-                          );
-                        },
-                        childCount: myReportsState.reports.length,
-                      ),
+              ),
+
+              // Loading
+              if (publicReportsState.isLoading &&
+                  publicReportsState.reports.isEmpty)
+                const SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.xxl),
+                      child:
+                          CircularProgressIndicator(color: AppColors.primary),
                     ),
                   ),
-              ],
+                )
 
-              // ── Recent reports (guest) ──────────────────────────────────
-              if (!isLoggedIn && _guestRecentReports.isNotEmpty) ...[
+              // Empty
+              else if (!publicReportsState.isLoading &&
+                  publicReportsState.reports.isEmpty)
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.xxl,
-                    AppSpacing.lg,
-                    AppSpacing.sm,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
                   ),
                   sliver: SliverToBoxAdapter(
-                    child: Text(
-                      'Signalements récents',
-                      style: AppTextStyles.h2,
-                    ).animate().fadeIn(duration: 400.ms, delay: 250.ms),
+                    child: Container(
+                      padding: const EdgeInsets.all(AppSpacing.xxl),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: AppRadius.large,
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.inbox_outlined,
+                            size: 40,
+                            color: AppColors.textHint,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'Aucun signalement traité pour l\'instant',
+                            style: AppTextStyles.body.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                )
+
+              // List
+              else
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg,
@@ -274,23 +200,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, i) {
-                        final report = _guestRecentReports[i];
-                        return _RecentReportTile(
-                          uuid: report['uuid'] as String,
-                          reference: report['reference'] as String,
-                          creationDate: report['creationDate'] as String,
-                          statusCode: report['statusCode'] as String? ?? 'NEW',
+                        final report = publicReportsState.reports[i];
+                        return _PublicReportCard(
+                          report: report,
                           index: i,
                           onTap: () => context.push(
-                            '/report-detail/${report['uuid']}',
+                            '/report-detail/${report.uuid}',
                           ),
                         );
                       },
-                      childCount: _guestRecentReports.take(3).length,
+                      childCount: publicReportsState.reports.length,
                     ),
                   ),
                 ),
-              ],
 
               const SliverPadding(
                 padding: EdgeInsets.only(bottom: AppSpacing.xxxl),
@@ -325,11 +247,9 @@ class _HomeHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top bar
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Logo text
               Row(
                 children: [
                   Container(
@@ -350,8 +270,6 @@ class _HomeHeader extends StatelessWidget {
                   ),
                 ],
               ),
-
-              // Profile / Login icon
               if (isLoggedIn)
                 GestureDetector(
                   onTap: () => context.push('/profile'),
@@ -376,19 +294,14 @@ class _HomeHeader extends StatelessWidget {
                 ),
             ],
           ),
-
           const SizedBox(height: AppSpacing.lg),
-
-          // Greeting
           Text(
             isLoggedIn
                 ? 'Bonjour, ${(authState.passenger.name as String).split(' ').first} 👋'
                 : 'Bienvenue',
             style: AppTextStyles.display,
           ),
-
           const SizedBox(height: AppSpacing.xs),
-
           Text(
             'Comment pouvons-nous vous aider ?',
             style: AppTextStyles.body.copyWith(
@@ -454,7 +367,6 @@ class _MainActionCardState extends State<_MainActionCard> {
           ),
           child: Row(
             children: [
-              // Icon container
               Container(
                 width: 52,
                 height: 52,
@@ -470,10 +382,7 @@ class _MainActionCardState extends State<_MainActionCard> {
                   color: widget.isPrimary ? Colors.white : AppColors.primary,
                 ),
               ),
-
               const SizedBox(width: AppSpacing.lg),
-
-              // Text
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -498,10 +407,7 @@ class _MainActionCardState extends State<_MainActionCard> {
                   ],
                 ),
               ),
-
               const SizedBox(width: AppSpacing.sm),
-
-              // Arrow
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 14,
@@ -541,15 +447,12 @@ class _GuestBanner extends StatelessWidget {
                 size: 20,
               ),
               const SizedBox(width: AppSpacing.sm),
-              Text(
-                'Vous avez un compte ?',
-                style: AppTextStyles.h3,
-              ),
+              Text('Vous avez un compte ?', style: AppTextStyles.h3),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Connectez-vous pour suivre vos signalements.',
+            'Connectez-vous pour accéder à votre profil.',
             style: AppTextStyles.bodySmall,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -582,63 +485,109 @@ class _GuestBanner extends StatelessWidget {
   }
 }
 
-// ── Recent Report Tile ────────────────────────────────────────────────────────
+// ── Public Report Card ────────────────────────────────────────────────────────
 
-class _RecentReportTile extends StatelessWidget {
-  final String uuid;
-  final String reference;
-  final String creationDate;
-  final String statusCode;
+class _PublicReportCard extends StatelessWidget {
+  final dynamic report;
   final int index;
   final VoidCallback onTap;
 
-  const _RecentReportTile({
-    required this.uuid,
-    required this.reference,
-    required this.creationDate,
-    required this.statusCode,
+  const _PublicReportCard({
+    required this.report,
     required this.index,
     required this.onTap,
   });
+
+  IconData _vehicleIcon(String? code) => switch (code?.toUpperCase()) {
+        'BUS' => Icons.directions_bus_rounded,
+        'METRO' => Icons.subway_rounded,
+        _ => Icons.directions_transit_rounded,
+      };
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
+        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: AppRadius.medium,
+          borderRadius: AppRadius.large,
           border: Border.all(color: AppColors.border),
-          boxShadow: AppShadows.small,
+          boxShadow: AppShadows.card,
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(reference, style: AppTextStyles.h3),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    DateFormatter.formatShort(creationDate),
-                    style: AppTextStyles.caption,
-                  ),
-                ],
-              ),
+            // Top row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Vehicle info
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: AppRadius.small,
+                      ),
+                      child: Icon(
+                        _vehicleIcon(report.supportTypeCode as String?),
+                        color: AppColors.primary,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (report.supportLabel != null)
+                          Text(
+                            report.supportLabel as String,
+                            style: AppTextStyles.h3.copyWith(fontSize: 13),
+                          ),
+                        if (report.reportTypeLabel != null)
+                          Text(
+                            report.reportTypeLabel as String,
+                            style: AppTextStyles.caption,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                StatusBadge(statusCode: report.statusCode as String? ?? 'NEW'),
+              ],
             ),
-            const SizedBox(width: AppSpacing.sm),
-            StatusBadge(statusCode: statusCode),
-            const SizedBox(width: AppSpacing.sm),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textSecondary,
-              size: 20,
+
+            const SizedBox(height: AppSpacing.md),
+
+            // Description
+            Text(
+              report.description as String,
+              style: AppTextStyles.body,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+
+            const SizedBox(height: AppSpacing.sm),
+
+            // Date + arrow
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  DateFormatter.formatShort(report.creationDate as String),
+                  style: AppTextStyles.caption,
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ],
             ),
           ],
         ),

@@ -29,8 +29,12 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -80,7 +84,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       SnackbarHelper.showSuccess(
           context, 'Nouveau code envoyé à ${widget.email}');
       // Clear fields
-      for (final c in _controllers) c.clear();
+      for (final c in _controllers) {
+        c.clear();
+      }
       _focusNodes.first.requestFocus();
     } catch (e) {
       if (!mounted) return;
@@ -99,7 +105,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     setState(() {});
   }
 
+  // ignore: deprecated_member_use
   void _onKeyDown(RawKeyEvent event, int index) {
+    // ignore: deprecated_member_use
     if (event is RawKeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.backspace &&
         _controllers[index].text.isEmpty &&
@@ -174,6 +182,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                     return SizedBox(
                       width: 48,
                       height: 56,
+                      // ignore: deprecated_member_use
                       child: RawKeyboardListener(
                         focusNode: FocusNode(),
                         onKey: (event) => _onKeyDown(event, i),

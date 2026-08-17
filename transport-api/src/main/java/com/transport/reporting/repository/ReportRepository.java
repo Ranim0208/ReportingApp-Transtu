@@ -19,4 +19,5 @@ public interface ReportRepository extends JpaRepository<Report, Long>, JpaSpecif
 
     boolean existsByReference(String reference);
     List<Report> findByPassenger_PassengerIdOrderByCreationDateDesc(Long passengerId);
+    List<Report> findByPublishTrueOrderByPublishDateDesc();
 }

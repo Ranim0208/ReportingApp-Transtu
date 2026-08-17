@@ -35,18 +35,20 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       await ref.read(apiClientProvider).forgotPassword(
             _controller.text.trim(),
           );
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isLoading = false;
           _sent = true;
         });
+      }
     } catch (_) {
       // Always show success — anti-enumeration
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isLoading = false;
           _sent = true;
         });
+      }
     }
   }
 

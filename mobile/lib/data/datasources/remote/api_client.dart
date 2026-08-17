@@ -55,27 +55,27 @@ class ApiClient {
     return _unwrap(response);
   }
 
-Future<void> verifyEmail({
-  required String email,
-  required String code,
-}) async {
-  final response = await _dio.post(
-    '/api/public/auth/verify-email',
-    data: {
-      'email': email,
-      'code':  code,
-    },
-  );
-  _checkSuccess(response);
-}
+  Future<void> verifyEmail({
+    required String email,
+    required String code,
+  }) async {
+    final response = await _dio.post(
+      '/api/public/auth/verify-email',
+      data: {
+        'email': email,
+        'code': code,
+      },
+    );
+    _checkSuccess(response);
+  }
 
-Future<void> resendVerification(String email) async {
-  final response = await _dio.post(
-    '/api/public/auth/resend-verification',
-    data: {'email': email},
-  );
-  _checkSuccess(response);
-}
+  Future<void> resendVerification(String email) async {
+    final response = await _dio.post(
+      '/api/public/auth/resend-verification',
+      data: {'email': email},
+    );
+    _checkSuccess(response);
+  }
 
   Future<void> forgotPassword(String email) async {
     final response = await _dio.post(
@@ -167,6 +167,11 @@ Future<void> resendVerification(String email) async {
     return _unwrap(response);
   }
 
+  Future<List<dynamic>> getPublishedReports() async {
+    final response = await _dio.get('/api/public/signalements/publics');
+    return _unwrapList(response);
+  }
+
   Future<List<dynamic>> getMyReports() async {
     final response = await _dio.get('/api/public/passenger/my-reports');
     return _unwrapList(response);
@@ -197,14 +202,14 @@ Future<void> resendVerification(String email) async {
   }
 
   /// Vérifie juste que success = true, sans extraire data
-void _checkSuccess(Response response) {
-  final body = response.data as Map<String, dynamic>;
-  if (body['success'] != true) {
-    throw AppException(
-      body['message'] as String? ?? AppStrings.unknownError,
-    );
+  void _checkSuccess(Response response) {
+    final body = response.data as Map<String, dynamic>;
+    if (body['success'] != true) {
+      throw AppException(
+        body['message'] as String? ?? AppStrings.unknownError,
+      );
+    }
   }
-}
 }
 
 // ── Auth Interceptor ──────────────────────────────────────────────────────────

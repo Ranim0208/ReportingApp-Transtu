@@ -82,11 +82,12 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             token: widget.token,
             newPassword: _passwordController.text,
           );
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isLoading = false;
           _success = true;
         });
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
