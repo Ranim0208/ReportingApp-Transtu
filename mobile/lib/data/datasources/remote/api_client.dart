@@ -34,24 +34,42 @@ class ApiClient {
     required String email,
     required String password,
     String? phoneNumber,
+    String? recaptchaToken,
   }) async {
-    final response = await _dio.post('/api/public/auth/register', data: {
-      'name': name,
-      'email': email,
-      'password': password,
-      if (phoneNumber != null) 'phoneNumber': phoneNumber,
-    });
+    final response = await _dio.post(
+      '/api/public/auth/register',
+      data: {
+        'name': name,
+        'email': email,
+        'password': password,
+        if (phoneNumber != null) 'phoneNumber': phoneNumber,
+      },
+      options: Options(
+        headers: {
+          if (recaptchaToken != null) 'X-Recaptcha-Token': recaptchaToken,
+        },
+      ),
+    );
     return _unwrap(response);
   }
 
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
+    String? recaptchaToken,
   }) async {
-    final response = await _dio.post('/api/public/auth/login', data: {
-      'email': email,
-      'password': password,
-    });
+    final response = await _dio.post(
+      '/api/public/auth/login',
+      data: {
+        'email': email,
+        'password': password,
+      },
+      options: Options(
+        headers: {
+          if (recaptchaToken != null) 'X-Recaptcha-Token': recaptchaToken,
+        },
+      ),
+    );
     return _unwrap(response);
   }
 

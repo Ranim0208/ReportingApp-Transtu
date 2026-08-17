@@ -8,11 +8,13 @@ abstract class AuthRepository {
     required String email,
     required String password,
     String? phoneNumber,
+    String? recaptchaToken,
   });
 
   Future<Either<Failure, Passenger>> login({
     required String email,
     required String password,
+    String? recaptchaToken,
   });
 
   Future<Either<Failure, void>> logout();

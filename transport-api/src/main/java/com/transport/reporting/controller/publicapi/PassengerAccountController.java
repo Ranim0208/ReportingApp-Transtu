@@ -5,6 +5,8 @@ import com.transport.reporting.dto.ForgotPasswordRequest;
 import com.transport.reporting.dto.ResendVerificationRequest;
 import com.transport.reporting.dto.ResetPasswordRequest;
 import com.transport.reporting.dto.VerifyEmailRequest;
+import com.transport.reporting.exception.BusinessException;
+import com.transport.reporting.security.RecaptchaService;
 import com.transport.reporting.service.PassengerAccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,23 +22,16 @@ import org.springframework.web.bind.annotation.*;
 public class PassengerAccountController {
 
     private final PassengerAccountService passengerAccountService;
+    private final RecaptchaService        recaptchaService;
 
-    /**
- * POST /api/public/auth/verify-email
- * Vérifie le code OTP et active le compte.
- */
-@PostMapping("/verify-email")
-public ResponseEntity<ApiResponse<Void>> verifyEmail(
-        @Valid @RequestBody VerifyEmailRequest request) {
-    passengerAccountService.verifyEmail(request);
-    return ResponseEntity.ok(
-            ApiResponse.ok("Email vérifié avec succès. Vous pouvez maintenant vous connecter.", null));
-}
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequest request) {
+        passengerAccountService.verifyEmail(request);
+        return ResponseEntity.ok(
+                ApiResponse.ok("Email vérifié avec succès.", null));
+    }
 
-    /**
-     * POST /api/public/auth/resend-verification
-     * Renvoie l'email de vérification.
-     */
     @PostMapping("/resend-verification")
     public ResponseEntity<ApiResponse<Void>> resendVerification(
             @Valid @RequestBody ResendVerificationRequest request) {
@@ -45,24 +40,24 @@ public ResponseEntity<ApiResponse<Void>> verifyEmail(
                 ApiResponse.ok("Email de vérification renvoyé.", null));
     }
 
-    /**
-     * POST /api/public/auth/forgot-password
-     * Envoie un email de reset (toujours 200 — anti-enumération).
-     */
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(
-            @Valid @RequestBody ForgotPasswordRequest request) {
+            @Valid @RequestBody ForgotPasswordRequest request,
+            @RequestHeader(value = "X-Recaptcha-Token", required = false)
+            String recaptchaToken) {
+
+        if (!recaptchaService.verify(recaptchaToken, "forgot_password")) {
+            throw new BusinessException(
+                    "Vérification de sécurité échouée. Veuillez réessayer.");
+        }
+
         passengerAccountService.forgotPassword(request);
         return ResponseEntity.ok(
                 ApiResponse.ok(
-                        "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.",
+                        "Si un compte existe avec cet email, un lien a été envoyé.",
                         null));
     }
 
-    /**
-     * POST /api/public/auth/reset-password
-     * Réinitialise le mot de passe avec le token.
-     */
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request) {

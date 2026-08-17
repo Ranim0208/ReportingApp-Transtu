@@ -102,10 +102,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<bool> login({
     required String email,
     required String password,
+    String? recaptchaToken,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
 
-    final result = await _loginUseCase(email: email, password: password);
+    final result = await _loginUseCase(
+      email: email,
+      password: password,
+      recaptchaToken: recaptchaToken,
+    );
 
     return result.fold(
       (failure) {
@@ -124,6 +129,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String email,
     required String password,
     String? phoneNumber,
+    String? recaptchaToken,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
 
@@ -132,6 +138,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       email: email,
       password: password,
       phoneNumber: phoneNumber,
+      recaptchaToken: recaptchaToken,
     );
 
     return result.fold(
@@ -140,7 +147,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return false;
       },
       (passenger) {
-        state = state.copyWith(isLoading: false, passenger: passenger);
+        // Ne pas sauvegarder — email non vérifié
+        state = state.copyWith(isLoading: false);
         return true;
       },
     );

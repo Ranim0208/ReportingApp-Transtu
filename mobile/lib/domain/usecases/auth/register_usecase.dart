@@ -12,12 +12,14 @@ class RegisterUseCase {
     required String email,
     required String password,
     String? phoneNumber,
+    String? recaptchaToken,
   }) {
     return _repository.register(
       name: name,
       email: email,
       password: password,
       phoneNumber: phoneNumber,
+      recaptchaToken: recaptchaToken,
     );
   }
 }

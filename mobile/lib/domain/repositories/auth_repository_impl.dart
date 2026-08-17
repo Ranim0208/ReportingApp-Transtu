@@ -18,6 +18,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
     String? phoneNumber,
+    String? recaptchaToken,
   }) async {
     try {
       final json = await _apiClient.register(
@@ -25,10 +26,11 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
         phoneNumber: phoneNumber,
+        recaptchaToken: recaptchaToken,
       );
       final model = PassengerAuthResponseModel.fromJson(json);
       final passenger = _toEntity(model);
-// Ne pas sauvegarder — email non vérifié
+      // Ne pas sauvegarder — email non vérifié
       return Right(passenger);
     } on AppException catch (e) {
       return Left(Failure(e.message));
@@ -41,11 +43,13 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, Passenger>> login({
     required String email,
     required String password,
+    String? recaptchaToken,
   }) async {
     try {
       final json = await _apiClient.login(
         email: email,
         password: password,
+        recaptchaToken: recaptchaToken,
       );
       final model = PassengerAuthResponseModel.fromJson(json);
       final passenger = _toEntity(model);

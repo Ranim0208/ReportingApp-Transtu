@@ -10,7 +10,12 @@ class LoginUseCase {
   Future<Either<Failure, Passenger>> call({
     required String email,
     required String password,
+    String? recaptchaToken,
   }) {
-    return _repository.login(email: email, password: password);
+    return _repository.login(
+      email: email,
+      password: password,
+      recaptchaToken: recaptchaToken,
+    );
   }
 }

@@ -7,6 +7,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../providers/auth_provider.dart';
+import '../../../core/services/recaptcha_service.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -70,6 +71,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Obtenir le token reCAPTCHA
+    final recaptchaToken = await RecaptchaService.getToken(context, 'register');
+
     final success = await ref.read(authProvider.notifier).register(
           name: _nameController.text.trim(),
           email: _emailController.text.trim(),
@@ -77,16 +82,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           phoneNumber: _phoneController.text.trim().isEmpty
               ? null
               : _phoneController.text.trim(),
+          recaptchaToken: recaptchaToken,
         );
+
     if (!mounted) return;
+
     if (success) {
-  // Redirige vers l'écran OTP avec l'email
-  context.go('/verify-email?email=${Uri.encodeComponent(_emailController.text.trim())}');
-} else {
-  final error = ref.read(authProvider).error;
-  SnackbarHelper.showError(
-      context, error ?? 'Erreur lors de l\'inscription.');
-}
+      context.go(
+        '/verify-email?email=${Uri.encodeComponent(_emailController.text.trim())}',
+      );
+    } else {
+      final error = ref.read(authProvider).error;
+      SnackbarHelper.showError(
+          context, error ?? 'Erreur lors de l\'inscription.');
+    }
   }
 
   @override

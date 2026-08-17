@@ -7,6 +7,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../providers/auth_provider.dart';
+import '../../../core/services/recaptcha_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -30,30 +31,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Obtenir le token reCAPTCHA
+    final recaptchaToken = await RecaptchaService.getToken(context, 'login');
+
     final success = await ref.read(authProvider.notifier).login(
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          recaptchaToken: recaptchaToken,
         );
+
     if (!mounted) return;
+
     if (success) {
       context.go('/home');
     } else {
       final error = ref.read(authProvider).error ?? '';
-      // Détecte le cas email non vérifié
-      debugPrint('ERREUR LOGIN: "$error"');
       if (error.contains('EMAIL_NOT_VERIFIED')) {
-        // Essaie d'extraire l'email
         final parts = error.split(':');
         final email =
             parts.length > 1 ? parts.last.trim() : _emailController.text.trim();
-        if (mounted) {
-          context.push(
-            '/verify-email?email=${Uri.encodeComponent(email)}',
-          );
-        }
+        context.push('/verify-email?email=${Uri.encodeComponent(email)}');
       } else {
         SnackbarHelper.showError(
-            context, error.isEmpty ? 'Erreur de connexion.' : error);
+          context,
+          error.isEmpty ? 'Erreur de connexion.' : error,
+        );
       }
     }
   }
