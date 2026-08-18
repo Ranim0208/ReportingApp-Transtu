@@ -17,8 +17,8 @@ class TimeoutException extends AppException {
 }
 
 class NotFoundException extends AppException {
-  const NotFoundException()
-      : super('Introuvable. Vérifiez les informations saisies.',
+  const NotFoundException([String? message])
+      : super(message ?? 'Signalement introuvable. Vérifiez l\'UUID saisi.',
             statusCode: 404);
 }
 

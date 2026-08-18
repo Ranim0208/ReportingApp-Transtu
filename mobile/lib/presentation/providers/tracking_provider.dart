@@ -3,6 +3,7 @@ import '../../data/datasources/remote/api_client.dart';
 import '../../domain/repositories/tracking_repository_impl.dart';
 import '../../domain/entities/tracking_result.dart';
 import '../../domain/usecases/tracking/track_report_usecase.dart';
+import 'package:flutter/foundation.dart';
 
 // ── Repository + Use Case Providers ──────────────────────────────────────────
 
@@ -57,6 +58,8 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
 
     return result.fold(
       (failure) {
+        debugPrint('=== TRACKING ERROR ===');
+        debugPrint('failure.message: "${failure.message}"');
         state = state.copyWith(isLoading: false, error: failure.message);
         return false;
       },

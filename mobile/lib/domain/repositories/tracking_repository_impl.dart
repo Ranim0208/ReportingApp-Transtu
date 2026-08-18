@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import '../../core/errors/app_exception.dart';
 import '../../core/errors/failure.dart';
 import '../../domain/entities/tracking_result.dart';
@@ -34,8 +35,35 @@ class TrackingRepositoryImpl implements TrackingRepository {
       ));
     } on AppException catch (e) {
       return Left(Failure(e.message));
+    } on DioException catch (e) {
+      final appError = e.error;
+      if (appError is AppException) {
+        return Left(Failure(appError.message));
+      }
+      // Extrait le message du backend directement
+      try {
+        final data = e.response?.data;
+        if (data is Map<String, dynamic>) {
+          final message = data['message'] as String?;
+          if (message != null) {
+            // Traduit les messages techniques en français
+            if (message.contains('not found') ||
+                message.contains('Not Found')) {
+              return Left(
+                  Failure('Signalement introuvable. Vérifiez l\'UUID saisi.'));
+            }
+            return Left(Failure(message));
+          }
+        }
+      } catch (_) {}
+      return Left(Failure('Signalement introuvable. Vérifiez l\'UUID saisi.'));
     } catch (e) {
-      return Left(Failure(e.toString()));
+      final raw = e.toString();
+      if (raw.contains('Error:')) {
+        final extracted = raw.split('Error:').last.trim();
+        return Left(Failure(extracted));
+      }
+      return Left(Failure('Une erreur est survenue.'));
     }
   }
 }

@@ -6,6 +6,7 @@ import '../../domain/entities/passenger.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../data/datasources/remote/api_client.dart';
 import '../../data/models/passenger_auth_response.dart';
+import 'package:dio/dio.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final ApiClient _apiClient;
@@ -34,8 +35,22 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(passenger);
     } on AppException catch (e) {
       return Left(Failure(e.message));
+    } on DioException catch (e) {
+      // Extrait le vrai message depuis l'erreur Dio
+      final appError = e.error;
+      if (appError is AppException) {
+        return Left(Failure(appError.message));
+      }
+      final message = e.message ?? 'Une erreur est survenue.';
+      return Left(Failure(message));
     } catch (e) {
-      return Left(Failure(e.toString()));
+      // Extrait le message depuis "DioException [unknown]: null\nError: ..."
+      final raw = e.toString();
+      if (raw.contains('Error:')) {
+        final extracted = raw.split('Error:').last.trim();
+        return Left(Failure(extracted));
+      }
+      return const Left(Failure('Une erreur est survenue.'));
     }
   }
 
@@ -57,8 +72,22 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(passenger);
     } on AppException catch (e) {
       return Left(Failure(e.message));
+    } on DioException catch (e) {
+      // Extrait le vrai message depuis l'erreur Dio
+      final appError = e.error;
+      if (appError is AppException) {
+        return Left(Failure(appError.message));
+      }
+      final message = e.message ?? 'Une erreur est survenue.';
+      return Left(Failure(message));
     } catch (e) {
-      return Left(Failure(e.toString()));
+      // Extrait le message depuis "DioException [unknown]: null\nError: ..."
+      final raw = e.toString();
+      if (raw.contains('Error:')) {
+        final extracted = raw.split('Error:').last.trim();
+        return Left(Failure(extracted));
+      }
+      return const Left(Failure('Une erreur est survenue.'));
     }
   }
 

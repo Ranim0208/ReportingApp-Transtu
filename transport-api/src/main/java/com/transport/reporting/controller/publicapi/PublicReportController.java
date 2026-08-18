@@ -67,7 +67,15 @@ public class PublicReportController {
                     + "Retourne uniquement les réponses marquées visibles pour l'auteur. "
                     + "N'expose pas les priorités, agents ni IDs internes."
     )
-    public ResponseEntity<ApiResponse<PublicReportTrackingResponse>> suiviByUuid(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(ApiResponse.ok(publicTrackingService.findByUuid(uuid)));
+ public ResponseEntity<ApiResponse<PublicReportTrackingResponse>> suiviByUuid(
+        @PathVariable String uuid) {
+    try {
+        final UUID parsedUuid = UUID.fromString(uuid);
+        return ResponseEntity.ok(
+                ApiResponse.ok(publicTrackingService.findByUuid(parsedUuid)));
+    } catch (IllegalArgumentException e) {
+        throw new com.transport.reporting.exception.BusinessException(
+                "UUID invalide. Vérifiez le lien ou le code saisi.");
     }
+}
 }

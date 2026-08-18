@@ -53,6 +53,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             parts.length > 1 ? parts.last.trim() : _emailController.text.trim();
         context.push('/verify-email?email=${Uri.encodeComponent(email)}');
       } else {
+        debugPrint('=== ERREUR LOGIN ===');
+        debugPrint('error string: "$error"');
+        debugPrint('auth state error: "${ref.read(authProvider).error}"');
         SnackbarHelper.showError(
           context,
           error.isEmpty ? 'Erreur de connexion.' : error,

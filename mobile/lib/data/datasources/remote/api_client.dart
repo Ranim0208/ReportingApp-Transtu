@@ -254,7 +254,6 @@ class _AuthInterceptor extends Interceptor {
 class _ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    // 401 → clear token + throw UnauthorizedException
     if (err.response?.statusCode == 401) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(AuthStorageKeys.token);
@@ -270,7 +269,16 @@ class _ErrorInterceptor extends Interceptor {
       );
     }
 
-    final exception = _mapError(err);
+    // Extrait le message AVANT de mapper l'erreur
+    String? backendMessage;
+    try {
+      final data = err.response?.data;
+      if (data is Map<String, dynamic>) {
+        backendMessage = data['message'] as String?;
+      }
+    } catch (_) {}
+
+    final exception = _mapError(err, backendMessage);
     handler.reject(
       DioException(
         requestOptions: err.requestOptions,
@@ -279,7 +287,7 @@ class _ErrorInterceptor extends Interceptor {
     );
   }
 
-  AppException _mapError(DioException err) {
+  AppException _mapError(DioException err, String? backendMessage) {
     if (err.type == DioExceptionType.connectionTimeout ||
         err.type == DioExceptionType.receiveTimeout ||
         err.type == DioExceptionType.sendTimeout) {
@@ -291,15 +299,19 @@ class _ErrorInterceptor extends Interceptor {
     }
 
     final statusCode = err.response?.statusCode;
-    final message = err.response?.data?['message'] as String?;
 
     return switch (statusCode) {
-      400 => AppException(message ?? AppStrings.unknownError, statusCode: 400),
-      404 => const NotFoundException(),
-      409 => ConflictException(message ?? AppStrings.unknownError),
-      413 => const AppException('Fichiers trop volumineux.', statusCode: 413),
+      400 => AppException(backendMessage ?? 'Données invalides.'),
+      401 => const UnauthorizedException(),
+      404 => AppException(
+          backendMessage ?? 'Signalement introuvable. Vérifiez l\'UUID saisi.'),
+      409 => AppException(backendMessage ?? 'Conflit de données.'),
+      413 => const AppException('Fichiers trop volumineux.'),
+      422 => AppException(backendMessage ?? 'Données invalides.'),
+      429 => const AppException(
+          'Trop de tentatives. Réessayez dans quelques minutes.'),
       500 => const ServerException(),
-      _ => AppException(message ?? AppStrings.unknownError),
+      _ => AppException(backendMessage ?? 'Une erreur est survenue.'),
     };
   }
 }
