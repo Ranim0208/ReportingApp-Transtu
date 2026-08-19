@@ -97,7 +97,7 @@ class _TrackEntryScreenState extends ConsumerState<TrackEntryScreen> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.only(bottom: 90),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

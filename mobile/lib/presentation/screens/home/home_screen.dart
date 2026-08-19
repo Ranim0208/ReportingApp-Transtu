@@ -215,7 +215,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
 
               const SliverPadding(
-                padding: EdgeInsets.only(bottom: AppSpacing.xxxl),
+                padding: EdgeInsets.only(bottom: 90),
               ),
             ],
           ),
