@@ -49,21 +49,21 @@ class TrackingRepositoryImpl implements TrackingRepository {
             // Traduit les messages techniques en français
             if (message.contains('not found') ||
                 message.contains('Not Found')) {
-              return Left(
+              return const Left(
                   Failure('Signalement introuvable. Vérifiez l\'UUID saisi.'));
             }
             return Left(Failure(message));
           }
         }
       } catch (_) {}
-      return Left(Failure('Signalement introuvable. Vérifiez l\'UUID saisi.'));
+      return const Left(Failure('Signalement introuvable. Vérifiez l\'UUID saisi.'));
     } catch (e) {
       final raw = e.toString();
       if (raw.contains('Error:')) {
         final extracted = raw.split('Error:').last.trim();
         return Left(Failure(extracted));
       }
-      return Left(Failure('Une erreur est survenue.'));
+      return const Left(Failure('Une erreur est survenue.'));
     }
   }
 }

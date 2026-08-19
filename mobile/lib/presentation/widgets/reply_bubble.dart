@@ -27,7 +27,7 @@ class ReplyBubble extends StatelessWidget {
           backgroundColor: AppColors.primary,
           child: Text(
             'T',
-            style: AppTextStyles.label.copyWith(
+            style: AppTextStyles.caption.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
             ),
