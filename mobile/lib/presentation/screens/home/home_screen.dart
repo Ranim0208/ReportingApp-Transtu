@@ -5,12 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/app_shadows.dart';
-import '../../../core/constants/app_radius.dart';
-import '../../../core/utils/date_formatter.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/public_reports_provider.dart';
-import '../../widgets/status_badge.dart';
+import '../../widgets/ticket_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -37,183 +34,126 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
+        bottom: false,
         child: RefreshIndicator(
           color: AppColors.primary,
           onRefresh: () => ref.read(publicReportsProvider.notifier).refresh(),
           child: CustomScrollView(
             slivers: [
-              // ── Header ───────────────────────────────────────────────────
+              // ── Top bar ───────────────────────────────────────────────────
               SliverToBoxAdapter(
-                child: _HomeHeader(
+                child: _TopBar(
                   authState: authState,
                   isLoggedIn: isLoggedIn,
-                )
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: -0.1, end: 0, curve: Curves.easeOut),
+                ).animate().fadeIn(duration: 400.ms),
               ),
 
-              // ── Main actions ──────────────────────────────────────────────
+              // ── Hero card ─────────────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.lg,
-                  AppSpacing.xl,
+                  AppSpacing.lg,
                   AppSpacing.lg,
                   0,
                 ),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    Text(
-                      'Que voulez-vous faire ?',
-                      style: AppTextStyles.h3.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
-                    const SizedBox(height: AppSpacing.md),
-                    _MainActionCard(
-                      icon: Icons.qr_code_scanner_rounded,
-                      title: 'Scanner un QR Code',
-                      description:
-                          'Identifiez votre véhicule et signalez un problème',
-                      isPrimary: true,
-                      onTap: () => context.push('/scanner'),
-                    )
-                        .animate()
-                        .fadeIn(duration: 400.ms, delay: 150.ms)
-                        .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
-                    const SizedBox(height: AppSpacing.md),
-                    _MainActionCard(
-                      icon: Icons.manage_search_rounded,
-                      title: 'Suivre un signalement',
-                      description: 'Consultez l\'état de votre signalement',
-                      isPrimary: false,
-                      onTap: () => context.push('/track'),
-                    )
-                        .animate()
-                        .fadeIn(duration: 400.ms, delay: 200.ms)
-                        .slideY(begin: 0.1, end: 0, curve: Curves.easeOut),
-                  ]),
+                sliver: SliverToBoxAdapter(
+                  child: _HeroCard(
+                    authState: authState,
+                    isLoggedIn: isLoggedIn,
+                  )
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: 80.ms)
+                      .slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
                 ),
               ),
 
-              // ── Guest section ─────────────────────────────────────────────
+              // ── Guest banner ──────────────────────────────────────────────
               if (!isLoggedIn)
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.lg,
-                    AppSpacing.xxl,
+                    AppSpacing.md,
                     AppSpacing.lg,
                     0,
                   ),
                   sliver: SliverToBoxAdapter(
                     child: _GuestBanner()
                         .animate()
-                        .fadeIn(duration: 400.ms, delay: 250.ms),
+                        .fadeIn(duration: 400.ms, delay: 150.ms),
                   ),
                 ),
 
-              // ── Published reports section ─────────────────────────────────
+              // ── Section label ─────────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.lg,
                   AppSpacing.xxl,
                   AppSpacing.lg,
-                  AppSpacing.sm,
+                  AppSpacing.md,
                 ),
                 sliver: SliverToBoxAdapter(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Signalements traités',
-                        style: AppTextStyles.h2,
-                      ).animate().fadeIn(duration: 400.ms, delay: 250.ms),
-                      if (publicReportsState.isLoading)
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                    ],
-                  ),
+                  child: const _EyebrowLabel(label: 'Réponses publiques')
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: 200.ms),
                 ),
               ),
 
-              // Loading
+              // ── Public reports ────────────────────────────────────────────
               if (publicReportsState.isLoading &&
                   publicReportsState.reports.isEmpty)
                 const SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(AppSpacing.xxl),
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.xxl),
+                    child: Center(
                       child:
                           CircularProgressIndicator(color: AppColors.primary),
                     ),
                   ),
                 )
-
-              // Empty
               else if (!publicReportsState.isLoading &&
                   publicReportsState.reports.isEmpty)
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   sliver: SliverToBoxAdapter(
-                    child: Container(
-                      padding: const EdgeInsets.all(AppSpacing.xxl),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: AppRadius.large,
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.inbox_outlined,
-                            size: 40,
-                            color: AppColors.textHint,
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            'Aucun signalement traité pour l\'instant',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
+                    child: _EmptyPublicReports(),
                   ),
                 )
-
-              // List
               else
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, i) {
                         final report = publicReportsState.reports[i];
-                        return _PublicReportCard(
-                          report: report,
-                          index: i,
+                        final route = [
+                          report.supportLabel,
+                          report.reportTypeLabel,
+                        ].where((e) => e != null).join(' · ');
+
+                        return TicketCard(
+                          route: route.isEmpty ? 'TRANSTU' : route,
+                          title: report.reference,
+                          message: report.description,
+                          statusCode: report.statusCode ?? 'NEW',
                           onTap: () => context.push(
                             '/report-detail/${report.uuid}',
                           ),
-                        );
+                        )
+                            .animate()
+                            .fadeIn(
+                              duration: 300.ms,
+                              delay: Duration(milliseconds: 250 + i * 80),
+                            )
+                            .slideY(begin: 0.05, end: 0);
                       },
                       childCount: publicReportsState.reports.length,
                     ),
                   ),
                 ),
 
+              // Bottom padding pour la nav
               const SliverPadding(
                 padding: EdgeInsets.only(bottom: 90),
               ),
@@ -225,87 +165,115 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
+// ── Top Bar ───────────────────────────────────────────────────────────────────
 
-class _HomeHeader extends StatelessWidget {
+class _TopBar extends StatelessWidget {
   final dynamic authState;
   final bool isLoggedIn;
 
-  const _HomeHeader({
-    required this.authState,
-    required this.isLoggedIn,
-  });
+  const _TopBar({required this.authState, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.surface,
+    return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
-        vertical: AppSpacing.lg,
+        vertical: AppSpacing.md,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Logo + tagline
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              // Logo placeholder — remplace par Image.asset si logo dispo
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.directions_transit_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 8,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
                   Text(
                     'TRANSTU',
-                    style: AppTextStyles.h1.copyWith(
+                    style: AppTextStyles.monoLabel.copyWith(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                  Text(
+                    'Signalement',
+                    style: AppTextStyles.monoLabel.copyWith(
                       color: AppColors.primary,
-                      letterSpacing: 2,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
-              if (isLoggedIn)
-                GestureDetector(
-                  onTap: () => context.push('/profile'),
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: AppColors.primaryLight,
-                    child: Text(
-                      (authState.passenger.name as String)[0].toUpperCase(),
-                      style: AppTextStyles.h3.copyWith(
-                        color: AppColors.primary,
+            ],
+          ),
+
+          // Profile icon
+          GestureDetector(
+            onTap: () =>
+                isLoggedIn ? context.go('/profile') : context.push('/login'),
+            child: Stack(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: isLoggedIn
+                      ? Center(
+                          child: Text(
+                            (authState.passenger.name as String)[0]
+                                .toUpperCase(),
+                            style: AppTextStyles.h3.copyWith(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.person_outline_rounded,
+                          size: 18,
+                          color: AppColors.textSecondary,
+                        ),
+                ),
+                if (isLoggedIn)
+                  Positioned(
+                    top: 7,
+                    right: 7,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.background,
+                          width: 1.5,
+                        ),
                       ),
                     ),
                   ),
-                )
-              else
-                IconButton(
-                  icon: const Icon(
-                    Icons.person_outline_rounded,
-                    color: AppColors.textSecondary,
-                  ),
-                  onPressed: () => context.push('/login'),
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            isLoggedIn
-                ? 'Bonjour, ${(authState.passenger.name as String).split(' ').first} 👋'
-                : 'Bienvenue',
-            style: AppTextStyles.display,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Comment pouvons-nous vous aider ?',
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.textSecondary,
+              ],
             ),
           ),
         ],
@@ -314,109 +282,116 @@ class _HomeHeader extends StatelessWidget {
   }
 }
 
-// ── Main Action Card ──────────────────────────────────────────────────────────
+// ── Hero Card ─────────────────────────────────────────────────────────────────
 
-class _MainActionCard extends StatefulWidget {
+class _HeroCard extends StatelessWidget {
+  final dynamic authState;
+  final bool isLoggedIn;
+
+  const _HeroCard({required this.authState, required this.isLoggedIn});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          stops: [0.0, 1.0],
+        ),
+        borderRadius: BorderRadius.circular(26),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Greeting
+          Text(
+            isLoggedIn
+                ? 'Bonjour, ${(authState.passenger.name as String).split(' ').first} 👋'
+                : 'Bienvenue sur Transtu',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: Colors.white.withValues(alpha: 0.85),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+
+          // Title
+          Text(
+            isLoggedIn
+                ? 'Votre espace\nsignalement'
+                : 'Signalez,\non s\'en occupe.',
+            style: AppTextStyles.display.copyWith(
+              color: Colors.white,
+              height: 1.1,
+            ),
+          ),
+
+          const SizedBox(height: AppSpacing.lg),
+
+          // Quick actions
+          Row(
+            children: [
+              _HeroAction(
+                icon: Icons.qr_code_scanner_rounded,
+                label: 'Scanner',
+                onTap: () => context.go('/scanner'),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              _HeroAction(
+                icon: Icons.manage_search_rounded,
+                label: 'Suivre',
+                onTap: () => context.go('/track'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroAction extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final String description;
-  final bool isPrimary;
+  final String label;
   final VoidCallback onTap;
 
-  const _MainActionCard({
+  const _HeroAction({
     required this.icon,
-    required this.title,
-    required this.description,
-    required this.isPrimary,
+    required this.label,
     required this.onTap,
   });
 
   @override
-  State<_MainActionCard> createState() => _MainActionCardState();
-}
-
-class _MainActionCardState extends State<_MainActionCard> {
-  bool _pressed = false;
-
-  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          decoration: BoxDecoration(
-            color: widget.isPrimary ? AppColors.primary : AppColors.surface,
-            borderRadius: AppRadius.large,
-            boxShadow: widget.isPrimary
-                ? [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.25),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ]
-                : AppShadows.card,
-            border:
-                widget.isPrimary ? null : Border.all(color: AppColors.border),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.18),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: widget.isPrimary
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : AppColors.primaryLight,
-                  borderRadius: AppRadius.medium,
-                ),
-                child: Icon(
-                  widget.icon,
-                  size: 26,
-                  color: widget.isPrimary ? Colors.white : AppColors.primary,
-                ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 16),
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.title,
-                      style: AppTextStyles.h3.copyWith(
-                        color: widget.isPrimary
-                            ? Colors.white
-                            : AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      widget.description,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: widget.isPrimary
-                            ? Colors.white.withValues(alpha: 0.8)
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: widget.isPrimary
-                    ? Colors.white.withValues(alpha: 0.7)
-                    : AppColors.textSecondary,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -432,52 +407,33 @@ class _GuestBanner extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: AppRadius.large,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
-        boxShadow: AppShadows.small,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.account_circle_outlined,
+          const Icon(
+            Icons.person_add_outlined,
+            color: AppColors.primary,
+            size: 20,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              'Créez un compte pour accéder à plus de fonctionnalités.',
+              style: AppTextStyles.bodySmall,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          GestureDetector(
+            onTap: () => context.push('/register'),
+            child: Text(
+              'S\'inscrire',
+              style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.primary,
-                size: 20,
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Text('Vous avez un compte ?', style: AppTextStyles.h3),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Connectez-vous pour accéder à votre profil.',
-            style: AppTextStyles.bodySmall,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => context.push('/login'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 44),
-                  ),
-                  child: const Text('Se connecter'),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => context.push('/register'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(0, 44),
-                  ),
-                  child: const Text('S\'inscrire'),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -485,119 +441,74 @@ class _GuestBanner extends StatelessWidget {
   }
 }
 
-// ── Public Report Card ────────────────────────────────────────────────────────
+// ── Eyebrow Label ─────────────────────────────────────────────────────────────
 
-class _PublicReportCard extends StatelessWidget {
-  final dynamic report;
-  final int index;
-  final VoidCallback onTap;
-
-  const _PublicReportCard({
-    required this.report,
-    required this.index,
-    required this.onTap,
-  });
-
-  IconData _vehicleIcon(String? code) => switch (code?.toUpperCase()) {
-        'BUS' => Icons.directions_bus_rounded,
-        'METRO' => Icons.subway_rounded,
-        _ => Icons.directions_transit_rounded,
-      };
+class _EyebrowLabel extends StatelessWidget {
+  final String label;
+  const _EyebrowLabel({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.md),
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: AppRadius.large,
-          border: Border.all(color: AppColors.border),
-          boxShadow: AppShadows.card,
+    return Row(
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: AppTextStyles.monoLabel.copyWith(
+            color: AppColors.primaryDark,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Vehicle info
-                Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        borderRadius: AppRadius.small,
-                      ),
-                      child: Icon(
-                        _vehicleIcon(report.supportTypeCode as String?),
-                        color: AppColors.primary,
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (report.supportLabel != null)
-                          Text(
-                            report.supportLabel as String,
-                            style: AppTextStyles.h3.copyWith(fontSize: 13),
-                          ),
-                        if (report.reportTypeLabel != null)
-                          Text(
-                            report.reportTypeLabel as String,
-                            style: AppTextStyles.caption,
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-                StatusBadge(statusCode: report.statusCode as String? ?? 'NEW'),
-              ],
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.border,
+                  AppColors.border.withValues(alpha: 0),
+                ],
+              ),
             ),
-
-            const SizedBox(height: AppSpacing.md),
-
-            // Description
-            Text(
-              report.description as String,
-              style: AppTextStyles.body,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-
-            const SizedBox(height: AppSpacing.sm),
-
-            // Date + arrow
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  DateFormatter.formatShort(report.creationDate as String),
-                  style: AppTextStyles.caption,
-                ),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
-      )
-          .animate()
-          .fadeIn(
-            duration: 300.ms,
-            delay: Duration(milliseconds: 300 + index * 80),
-          )
-          .slideY(begin: 0.05, end: 0),
+      ],
+    );
+  }
+}
+
+// ── Empty public reports ──────────────────────────────────────────────────────
+
+class _EmptyPublicReports extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.xxl),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.border,
+          style: BorderStyle.solid,
+        ),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.inbox_outlined,
+            size: 40,
+            color: AppColors.textHint,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Aucune réponse publique pour l\'instant',
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }
