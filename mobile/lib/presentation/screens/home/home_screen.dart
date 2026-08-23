@@ -187,17 +187,13 @@ class _TopBar extends StatelessWidget {
           Row(
             children: [
               // Logo placeholder — remplace par Image.asset si logo dispo
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.directions_transit_rounded,
-                  color: Colors.white,
-                  size: 18,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/images/transtu_logo.png',
+                  width: 34,
+                  height: 34,
+                  fit: BoxFit.cover,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
