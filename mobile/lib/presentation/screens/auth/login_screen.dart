@@ -6,8 +6,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/snackbar_helper.dart';
-import '../../providers/auth_provider.dart';
 import '../../../core/services/recaptcha_service.dart';
+import '../../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -32,7 +32,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Obtenir le token reCAPTCHA
     final recaptchaToken = await RecaptchaService.getToken(context, 'login');
 
     final success = await ref.read(authProvider.notifier).login(
@@ -53,9 +52,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             parts.length > 1 ? parts.last.trim() : _emailController.text.trim();
         context.push('/verify-email?email=${Uri.encodeComponent(email)}');
       } else {
-        debugPrint('=== ERREUR LOGIN ===');
-        debugPrint('error string: "$error"');
-        debugPrint('auth state error: "${ref.read(authProvider).error}"');
         SnackbarHelper.showError(
           context,
           error.isEmpty ? 'Erreur de connexion.' : error,
@@ -70,15 +66,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded,
-              color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -87,8 +74,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Back
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(11),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_rounded,
+                      size: 16,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: AppSpacing.xxl),
+
                 // Header
-                Text('Connexion', style: AppTextStyles.display)
+                Text('Se connecter', style: AppTextStyles.display)
                     .animate()
                     .fadeIn(duration: 400.ms)
                     .slideY(begin: 0.1, end: 0),
@@ -96,7 +104,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: AppSpacing.xs),
 
                 Text(
-                  'Accédez à vos signalements',
+                  'Accédez à vos signalements et\nà votre suivi personnalisé.',
                   style: AppTextStyles.body.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -104,13 +112,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 const SizedBox(height: AppSpacing.xxxl),
 
-                // Email
+                // Email field
+                const _FieldLabel(label: 'Adresse e-mail'),
+                const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    labelText: 'Adresse email',
-                    prefixIcon: Icon(Icons.mail_outline_rounded, size: 20),
+                    hintText: 'vous@mail.com',
+                    prefixIcon: Icon(Icons.mail_outline_rounded,
+                        size: 18, color: AppColors.textHint),
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Email requis.';
@@ -121,21 +132,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 const SizedBox(height: AppSpacing.md),
 
-                // Password
+                // Password field
+                const _FieldLabel(label: 'Mot de passe'),
+                const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Mot de passe',
-                    prefixIcon:
-                        const Icon(Icons.lock_outline_rounded, size: 20),
+                    hintText: '••••••••',
+                    prefixIcon: const Icon(Icons.lock_outline_rounded,
+                        size: 18, color: AppColors.textHint),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        size: 20,
-                        color: AppColors.textSecondary,
+                        size: 18,
+                        color: AppColors.textHint,
                       ),
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
@@ -145,8 +158,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       v == null || v.isEmpty ? 'Mot de passe requis.' : null,
                 ).animate().fadeIn(duration: 400.ms, delay: 160.ms),
 
-                const SizedBox(height: AppSpacing.xxxl),
-
+                // Forgot password
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -159,13 +171,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Text(
                       'Mot de passe oublié ?',
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
+                        color: AppColors.railBlue,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xxl),
+                ).animate().fadeIn(duration: 400.ms, delay: 180.ms),
+
+                const SizedBox(height: AppSpacing.xl),
 
                 // Submit
                 ElevatedButton(
@@ -175,20 +188,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
+                              color: Colors.white, strokeWidth: 2),
                         )
                       : const Text('Se connecter'),
-                ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
+                ).animate().fadeIn(duration: 400.ms, delay: 220.ms),
+
+                const SizedBox(height: AppSpacing.md),
+
+                // Divider
+                Row(
+                  children: [
+                    const Expanded(child: Divider(color: AppColors.border)),
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                      child: Text(
+                        'ou',
+                        style: AppTextStyles.monoLabel.copyWith(
+                          color: AppColors.textHint,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider(color: AppColors.border)),
+                  ],
+                ).animate().fadeIn(duration: 400.ms, delay: 260.ms),
 
                 const SizedBox(height: AppSpacing.md),
 
                 // Guest
                 OutlinedButton(
-                  onPressed: () => context.pop(),
+                  onPressed: () => context.go('/home'),
                   child: const Text('Continuer sans compte'),
-                ).animate().fadeIn(duration: 400.ms, delay: 240.ms),
+                ).animate().fadeIn(duration: 400.ms, delay: 280.ms),
 
                 const SizedBox(height: AppSpacing.xxl),
 
@@ -204,21 +235,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         children: [
                           TextSpan(
-                            text: 'S\'inscrire',
+                            text: 'Créer un compte',
                             style: AppTextStyles.body.copyWith(
                               color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                ).animate().fadeIn(duration: 400.ms, delay: 280.ms),
+                ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Field Label ───────────────────────────────────────────────────────────────
+
+class _FieldLabel extends StatelessWidget {
+  final String label;
+  const _FieldLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label.toUpperCase(),
+      style: AppTextStyles.monoLabel.copyWith(
+        color: AppColors.textSecondary,
+        fontWeight: FontWeight.w700,
+        fontSize: 11,
       ),
     );
   }

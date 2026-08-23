@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_shadows.dart';
 import '../../../core/utils/snackbar_helper.dart';
 
@@ -28,7 +27,7 @@ class SuccessScreen extends StatelessWidget {
             children: [
               const SizedBox(height: AppSpacing.xxxl),
 
-              // Success icon
+              // Check
               Container(
                 width: 88,
                 height: 88,
@@ -39,7 +38,7 @@ class SuccessScreen extends StatelessWidget {
                 child: const Icon(
                   Icons.check_rounded,
                   color: AppColors.success,
-                  size: 48,
+                  size: 44,
                 ),
               ).animate().scale(
                     begin: const Offset(0, 0),
@@ -66,6 +65,27 @@ class SuccessScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ).animate().fadeIn(duration: 400.ms, delay: 380.ms),
 
+              if (attachmentCount > 0) ...[
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.successLight,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$attachmentCount photo(s) jointe(s)',
+                    style: AppTextStyles.monoLabel.copyWith(
+                      color: AppColors.primaryDark,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ).animate().fadeIn(duration: 400.ms, delay: 420.ms),
+              ],
+
               const SizedBox(height: AppSpacing.xxxl),
 
               // Reference card
@@ -74,23 +94,23 @@ class SuccessScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: AppRadius.large,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border),
                   boxShadow: AppShadows.card,
                 ),
                 child: Column(
                   children: [
                     Text(
-                      'Référence du signalement',
-                      style: AppTextStyles.caption,
+                      'RÉFÉRENCE',
+                      style: AppTextStyles.monoLabel.copyWith(
+                        color: AppColors.textHint,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          reference,
-                          style: AppTextStyles.mono,
-                        ),
+                        Text(reference, style: AppTextStyles.mono),
                         const SizedBox(width: AppSpacing.sm),
                         GestureDetector(
                           onTap: () {
@@ -101,43 +121,23 @@ class SuccessScreen extends StatelessWidget {
                             padding: const EdgeInsets.all(AppSpacing.xs),
                             decoration: BoxDecoration(
                               color: AppColors.surfaceAlt,
-                              borderRadius: AppRadius.small,
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
                               Icons.copy_rounded,
-                              size: 16,
+                              size: 14,
                               color: AppColors.textSecondary,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    if (attachmentCount > 0) ...[
-                      const SizedBox(height: AppSpacing.md),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.successLight,
-                          borderRadius: AppRadius.small,
-                        ),
-                        child: Text(
-                          '$attachmentCount photo(s) jointe(s)',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.success,
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ).animate().fadeIn(duration: 400.ms, delay: 450.ms),
 
               const SizedBox(height: AppSpacing.xxxl),
 
-              // Track button
               ElevatedButton(
                 onPressed: () => context.push('/report-detail/$uuid'),
                 child: const Text('Suivre mon signalement'),

@@ -272,33 +272,33 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.large),
-        title: const Text('Déconnexion'),
-        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Déconnecter'),
-          ),
-        ],
-      ),
-    );
+Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: AppRadius.large),
+      title: const Text('Déconnexion'),
+      content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Annuler'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          style: TextButton.styleFrom(foregroundColor: AppColors.error),
+          child: const Text('Déconnecter'),
+        ),
+      ],
+    ),
+  );
 
-    if (confirm == true && context.mounted) {
-      await ref.read(authProvider.notifier).logout();
-      ref.read(myReportsProvider.notifier).clear();
-      if (context.mounted) context.go('/home');
-    }
+  if (confirm == true && context.mounted) {
+    await ref.read(authProvider.notifier).logout();
+    ref.read(myReportsProvider.notifier).clear();
+    if (context.mounted) context.go('/home');
   }
+}
 }
 
 // ── Profile Row ───────────────────────────────────────────────────────────────

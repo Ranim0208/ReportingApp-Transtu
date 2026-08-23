@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/utils/snackbar_helper.dart';
-import '../../providers/auth_provider.dart';
 import '../../../core/services/recaptcha_service.dart';
+import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -57,7 +56,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         1 => AppColors.error,
         2 => AppColors.warning,
         3 => AppColors.warning,
-        4 => AppColors.success,
+        4 => AppColors.primary,
         _ => AppColors.border,
       };
 
@@ -72,7 +71,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Obtenir le token reCAPTCHA
     final recaptchaToken = await RecaptchaService.getToken(context, 'register');
 
     final success = await ref.read(authProvider.notifier).register(
@@ -104,15 +102,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded,
-              color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -121,80 +110,98 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Créer un compte', style: AppTextStyles.display)
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: 0.1, end: 0),
+                // Back
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(11),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back_rounded,
+                          size: 16,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Text('Créer un compte', style: AppTextStyles.h2),
+                  ],
+                ),
 
-                const SizedBox(height: AppSpacing.xs),
-
-                Text(
-                  'Rejoignez Transtu pour suivre vos signalements',
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ).animate().fadeIn(duration: 400.ms, delay: 80.ms),
-
-                const SizedBox(height: AppSpacing.xxxl),
+                const SizedBox(height: AppSpacing.xxl),
 
                 // Name
+                const _FieldLabel(label: 'Nom complet'),
+                const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Nom complet',
-                    prefixIcon: Icon(Icons.person_outline_rounded, size: 20),
+                    hintText: 'Votre nom',
+                    prefixIcon: Icon(Icons.person_outline_rounded,
+                        size: 18, color: AppColors.textHint),
                   ),
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Nom requis.' : null,
-                ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
-
+                ),
                 const SizedBox(height: AppSpacing.md),
 
                 // Email
+                const _FieldLabel(label: 'Adresse e-mail'),
+                const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    labelText: 'Adresse email',
-                    prefixIcon: Icon(Icons.mail_outline_rounded, size: 20),
+                    hintText: 'vous@mail.com',
+                    prefixIcon: Icon(Icons.mail_outline_rounded,
+                        size: 18, color: AppColors.textHint),
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Email requis.';
                     if (!v.contains('@')) return 'Email invalide.';
                     return null;
                   },
-                ).animate().fadeIn(duration: 400.ms, delay: 130.ms),
-
+                ),
                 const SizedBox(height: AppSpacing.md),
 
                 // Phone
+                const _FieldLabel(label: 'Téléphone (optionnel)'),
+                const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
-                    labelText: 'Téléphone (optionnel)',
-                    prefixIcon: Icon(Icons.phone_outlined, size: 20),
-                    prefixText: '+216 ',
+                    hintText: '+216 XX XXX XXX',
+                    prefixIcon: Icon(Icons.phone_outlined,
+                        size: 18, color: AppColors.textHint),
                   ),
-                ).animate().fadeIn(duration: 400.ms, delay: 160.ms),
-
+                ),
                 const SizedBox(height: AppSpacing.md),
 
                 // Password
+                const _FieldLabel(label: 'Mot de passe'),
+                const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Mot de passe',
-                    prefixIcon:
-                        const Icon(Icons.lock_outline_rounded, size: 20),
+                    hintText: '8 caractères minimum',
+                    prefixIcon: const Icon(Icons.lock_outline_rounded,
+                        size: 18, color: AppColors.textHint),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        size: 20,
-                        color: AppColors.textSecondary,
+                        size: 18,
+                        color: AppColors.textHint,
                       ),
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
@@ -203,7 +210,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   validator: (v) => v == null || v.length < 8
                       ? 'Minimum 8 caractères.'
                       : null,
-                ).animate().fadeIn(duration: 400.ms, delay: 190.ms),
+                ),
 
                 // Strength bar
                 if (_passwordController.text.isNotEmpty) ...[
@@ -224,7 +231,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       const SizedBox(width: AppSpacing.sm),
                       Text(
                         _strengthLabel,
-                        style: AppTextStyles.caption.copyWith(
+                        style: AppTextStyles.monoLabel.copyWith(
                           color: _strengthColor,
                         ),
                       ),
@@ -235,20 +242,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: AppSpacing.md),
 
                 // Confirm password
+                const _FieldLabel(label: 'Confirmer le mot de passe'),
+                const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _confirmController,
                   obscureText: _obscureConfirm,
                   decoration: InputDecoration(
-                    labelText: 'Confirmer le mot de passe',
-                    prefixIcon:
-                        const Icon(Icons.lock_outline_rounded, size: 20),
+                    hintText: '••••••••',
+                    prefixIcon: const Icon(Icons.lock_outline_rounded,
+                        size: 18, color: AppColors.textHint),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirm
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        size: 20,
-                        color: AppColors.textSecondary,
+                        size: 18,
+                        color: AppColors.textHint,
                       ),
                       onPressed: () =>
                           setState(() => _obscureConfirm = !_obscureConfirm),
@@ -257,9 +266,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   validator: (v) => v != _passwordController.text
                       ? 'Les mots de passe ne correspondent pas.'
                       : null,
-                ).animate().fadeIn(duration: 400.ms, delay: 220.ms),
+                ),
 
-                const SizedBox(height: AppSpacing.xxxl),
+                const SizedBox(height: AppSpacing.xxl),
 
                 // Submit
                 ElevatedButton(
@@ -269,15 +278,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
+                              color: Colors.white, strokeWidth: 2),
                         )
                       : const Text('Créer mon compte'),
-                ).animate().fadeIn(duration: 400.ms, delay: 260.ms),
+                ),
 
                 const SizedBox(height: AppSpacing.xxl),
 
+                // Login link
                 Center(
                   child: GestureDetector(
                     onTap: () => context.pushReplacement('/login'),
@@ -292,18 +300,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             text: 'Se connecter',
                             style: AppTextStyles.body.copyWith(
                               color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
+                ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String label;
+  const _FieldLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label.toUpperCase(),
+      style: AppTextStyles.monoLabel.copyWith(
+        color: AppColors.textSecondary,
+        fontWeight: FontWeight.w700,
+        fontSize: 11,
       ),
     );
   }
