@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_shadows.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../providers/auth_provider.dart';
@@ -21,23 +20,45 @@ class ProfileScreen extends ConsumerWidget {
 
     if (passenger == null) {
       return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.person_off_outlined,
-                  size: 56, color: AppColors.textHint),
-              const SizedBox(height: AppSpacing.lg),
-              Text('Vous n\'êtes pas connecté.',
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.textSecondary,
-                  )),
-              const SizedBox(height: AppSpacing.xxl),
-              ElevatedButton(
-                onPressed: () => context.go('/login'),
-                child: const Text('Se connecter'),
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xxl),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.person_off_outlined,
+                      size: 32,
+                      color: AppColors.textHint,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  Text('Non connecté', style: AppTextStyles.h2),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Connectez-vous pour accéder à votre profil.',
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+                  ElevatedButton(
+                    onPressed: () => context.push('/login'),
+                    child: const Text('Se connecter'),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       );
@@ -53,290 +74,401 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Mon profil'),
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded,
-              color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // ── Avatar header ─────────────────────────────────────────────
-            Container(
-              color: AppColors.surface,
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.xxl),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: AppColors.primaryLight,
-                    child: Text(
-                      initials,
-                      style: AppTextStyles.display.copyWith(
-                        color: AppColors.primary,
-                        fontSize: 28,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(passenger.name, style: AppTextStyles.h1),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    passenger.email,
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.sm),
-
-            // ── Info card ─────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: AppRadius.large,
-                  boxShadow: AppShadows.card,
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // ── Header ────────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
                 ),
-                child: Column(
+                child: Row(
                   children: [
-                    _ProfileRow(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Nom complet',
-                      value: passenger.name,
-                    ),
-                    const Divider(height: 1, indent: 52),
-                    _ProfileRow(
-                      icon: Icons.mail_outline_rounded,
-                      label: 'Adresse email',
-                      value: passenger.email,
-                    ),
-                    if (passenger.phoneNumber != null) ...[
-                      const Divider(height: 1, indent: 52),
-                      _ProfileRow(
-                        icon: Icons.phone_outlined,
-                        label: 'Téléphone',
-                        value: passenger.phoneNumber!,
-                      ),
-                    ],
+                    Text('Profil', style: AppTextStyles.display),
                   ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: AppSpacing.xxl),
-
-            // ── My reports ────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Mes signalements', style: AppTextStyles.h2),
-                  const SizedBox(height: AppSpacing.md),
-                  if (myReportsState.isLoading)
-                    const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    )
-                  else if (myReportsState.reports.isEmpty)
+              // ── Avatar section ────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Column(
+                  children: [
+                    // Avatar
                     Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(AppSpacing.xxl),
+                      width: 74,
+                      height: 74,
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: AppRadius.large,
-                        border: Border.all(color: AppColors.border),
+                        gradient: const LinearGradient(
+                          colors: [AppColors.railBlue, AppColors.textPrimary],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: AppShadows.large,
                       ),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.inbox_outlined,
-                              size: 40, color: AppColors.textHint),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            'Aucun signalement',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                      child: Center(
+                        child: Text(
+                          initials,
+                          style: AppTextStyles.display.copyWith(
+                            color: Colors.white,
+                            fontSize: 26,
                           ),
-                        ],
-                      ),
-                    )
-                  else
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: AppRadius.large,
-                        boxShadow: AppShadows.card,
-                      ),
-                      child: Column(
-                        children: myReportsState.reports
-                            .take(5)
-                            .toList()
-                            .asMap()
-                            .entries
-                            .map((e) {
-                          final i = e.key;
-                          final report = e.value;
-                          final isLast = i ==
-                              (myReportsState.reports.length > 5
-                                      ? 5
-                                      : myReportsState.reports.length) -
-                                  1;
-                          return Column(
-                            children: [
-                              ListTile(
-                                onTap: () => context.push(
-                                  '/report-detail/${report.uuid}',
-                                ),
-                                leading: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryLight,
-                                    borderRadius: AppRadius.medium,
-                                  ),
-                                  child: const Icon(
-                                    Icons.assignment_outlined,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                                ),
-                                title: Text(
-                                  report.reference,
-                                  style: AppTextStyles.h3,
-                                ),
-                                subtitle: Text(
-                                  DateFormatter.formatShort(
-                                      report.creationDate),
-                                  style: AppTextStyles.caption,
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    StatusBadge(
-                                      statusCode: report.statusCode ?? 'NEW',
-                                    ),
-                                    const SizedBox(width: AppSpacing.sm),
-                                    const Icon(
-                                      Icons.chevron_right_rounded,
-                                      color: AppColors.textSecondary,
-                                      size: 20,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (!isLast) const Divider(height: 1, indent: 68),
-                            ],
-                          );
-                        }).toList(),
+                        ),
                       ),
                     ),
-                ],
-              ),
-            ),
 
-            const SizedBox(height: AppSpacing.xxl),
+                    const SizedBox(height: AppSpacing.md),
 
-            // ── Logout ────────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.error,
-                  side: const BorderSide(color: AppColors.error),
-                  minimumSize: const Size(double.infinity, 48),
+                    Text(passenger.name, style: AppTextStyles.h1),
+
+                    const SizedBox(height: AppSpacing.xs),
+
+                    // Email + verified badge
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          passenger.email,
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryLight,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.check_rounded,
+                                size: 10,
+                                color: AppColors.primaryDark,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                'Vérifié',
+                                style: AppTextStyles.monoLabel.copyWith(
+                                  color: AppColors.primaryDark,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                onPressed: () => _confirmLogout(context, ref),
-                child: const Text('Se déconnecter'),
               ),
-            ),
 
-            const SizedBox(height: 90),
-          ],
+              const SizedBox(height: AppSpacing.xxl),
+
+              // ── Account section ───────────────────────────────────────────
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: _EyebrowLabel(label: 'Compte'),
+              ),
+
+              const SizedBox(height: AppSpacing.md),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: AppShadows.card,
+                  ),
+                  child: Column(
+                    children: [
+                      _MenuItem(
+                        icon: Icons.person_outline_rounded,
+                        label: 'Mes informations',
+                        onTap: () => _showComingSoon(context),
+                      ),
+                      const Divider(height: 1, indent: 54),
+                      _MenuItem(
+                        icon: Icons.lock_outline_rounded,
+                        label: 'Sécurité & mot de passe',
+                        onTap: () => _showComingSoon(context),
+                      ),
+                      const Divider(height: 1, indent: 54),
+                      _MenuItem(
+                        icon: Icons.notifications_outlined,
+                        label: 'Notifications',
+                        onTap: () => _showComingSoon(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.xxl),
+
+              // ── Recent reports ────────────────────────────────────────────
+              if (myReportsState.reports.isNotEmpty) ...[
+                const Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  child: _EyebrowLabel(label: 'Mes signalements'),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: AppShadows.card,
+                    ),
+                    child: Column(
+                      children: myReportsState.reports
+                          .take(5)
+                          .toList()
+                          .asMap()
+                          .entries
+                          .map((e) {
+                        final i = e.key;
+                        final report = e.value;
+                        final isLast = i ==
+                            (myReportsState.reports.length > 5
+                                    ? 5
+                                    : myReportsState.reports.length) -
+                                1;
+                        return Column(
+                          children: [
+                            ListTile(
+                              onTap: () => context.push(
+                                '/report-detail/${report.uuid}',
+                              ),
+                              leading: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryLight,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.assignment_outlined,
+                                  color: AppColors.primary,
+                                  size: 18,
+                                ),
+                              ),
+                              title: Text(
+                                report.reference,
+                                style: AppTextStyles.h3,
+                              ),
+                              subtitle: Text(
+                                DateFormatter.formatShort(report.creationDate),
+                                style: AppTextStyles.caption,
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  StatusBadge(
+                                    statusCode: report.statusCode ?? 'NEW',
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                  const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: AppColors.textSecondary,
+                                    size: 18,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (!isLast) const Divider(height: 1, indent: 54),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+              ],
+
+              // ── Session section ───────────────────────────────────────────
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: _EyebrowLabel(label: 'Session'),
+              ),
+
+              const SizedBox(height: AppSpacing.md),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: AppShadows.card,
+                  ),
+                  child: _MenuItem(
+                    icon: Icons.logout_rounded,
+                    label: 'Se déconnecter',
+                    isDanger: true,
+                    onTap: () => _confirmLogout(context, ref),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 90),
+            ],
+          ),
         ),
       ),
     );
   }
 
-Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
-  final confirm = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.large),
-      title: const Text('Déconnexion'),
-      content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext, false),
-          child: const Text('Annuler'),
+  void _showComingSoon(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Fonctionnalité à venir'),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
         ),
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext, true),
-          style: TextButton.styleFrom(foregroundColor: AppColors.error),
-          child: const Text('Déconnecter'),
-        ),
-      ],
-    ),
-  );
+        backgroundColor: AppColors.textSecondary,
+      ),
+    );
+  }
 
-  if (confirm == true && context.mounted) {
-    await ref.read(authProvider.notifier).logout();
-    ref.read(myReportsProvider.notifier).clear();
-    if (context.mounted) context.go('/home');
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text('Déconnexion'),
+        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Déconnecter'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      await ref.read(authProvider.notifier).logout();
+      ref.read(myReportsProvider.notifier).clear();
+      if (context.mounted) context.go('/home');
+    }
   }
 }
-}
 
-// ── Profile Row ───────────────────────────────────────────────────────────────
+// ── Menu Item ─────────────────────────────────────────────────────────────────
 
-class _ProfileRow extends StatelessWidget {
+class _MenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String value;
+  final bool isDanger;
+  final VoidCallback onTap;
 
-  const _ProfileRow({
+  const _MenuItem({
     required this.icon,
     required this.label,
-    required this.value,
+    required this.onTap,
+    this.isDanger = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
+    final color = isDanger ? AppColors.error : AppColors.textPrimary;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: isDanger ? AppColors.errorLight : AppColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(icon, size: 16, color: color),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.h3.copyWith(color: color),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 16,
+              color: AppColors.textHint,
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: AppColors.primary),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: AppTextStyles.caption),
-                const SizedBox(height: AppSpacing.xs),
-                Text(value, style: AppTextStyles.body),
-              ],
+    );
+  }
+}
+
+// ── Eyebrow Label ─────────────────────────────────────────────────────────────
+
+class _EyebrowLabel extends StatelessWidget {
+  final String label;
+  const _EyebrowLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: AppTextStyles.monoLabel.copyWith(
+            color: AppColors.primaryDark,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.border,
+                  AppColors.border.withValues(alpha: 0),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
