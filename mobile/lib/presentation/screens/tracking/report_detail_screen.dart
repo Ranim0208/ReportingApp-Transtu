@@ -5,12 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_shadows.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../providers/tracking_provider.dart';
-import '../../widgets/info_row.dart';
-import '../../widgets/reply_bubble.dart';
 import '../../widgets/app_error.dart';
 
 class ReportDetailScreen extends ConsumerStatefulWidget {
@@ -36,27 +33,55 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          state.result?.reference ?? 'Suivi',
-          style: AppTextStyles.h2,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── Top bar ───────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.pop(),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(11),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: const Icon(Icons.arrow_back_rounded,
+                          size: 16, color: AppColors.textPrimary),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      state.result?.reference ?? 'Signalement',
+                      style: AppTextStyles.h2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh_rounded,
+                        color: AppColors.primary, size: 20),
+                    onPressed: () => ref
+                        .read(trackingProvider.notifier)
+                        .refresh(widget.uuid),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Body ──────────────────────────────────────────────────────
+            Expanded(child: _buildBody(state)),
+          ],
         ),
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded,
-              color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
-            onPressed: () =>
-                ref.read(trackingProvider.notifier).refresh(widget.uuid),
-          ),
-        ],
       ),
-      body: _buildBody(state),
     );
   }
 
@@ -83,48 +108,129 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       onRefresh: () => ref.read(trackingProvider.notifier).refresh(widget.uuid),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.xxxl,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Status card ───────────────────────────────────────────────
-            _StatusCard(result: result)
-                .animate()
-                .fadeIn(duration: 300.ms)
-                .slideY(begin: 0.05, end: 0),
+            // ── Trail card ────────────────────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.border),
+                boxShadow: AppShadows.card,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Reference + meta
+                  Text(
+                    '${result.reference} · ${result.supportLabel ?? ''}'
+                    ' · Ouvert le ${DateFormatter.formatShort(result.creationDate)}',
+                    style: AppTextStyles.monoSmall,
+                  ),
 
-            const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.lg),
 
-            // ── Info card ─────────────────────────────────────────────────
-            _InfoCard(result: result)
-                .animate()
-                .fadeIn(duration: 300.ms, delay: 80.ms)
-                .slideY(begin: 0.05, end: 0),
+                  // Trail steps
+                  _TrailLine(statusCode: result.statusCode),
+                ],
+              ),
+            ).animate().fadeIn(duration: 300.ms),
 
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.xxl),
 
-            // ── Replies section ───────────────────────────────────────────
-            Text('Réponses de Transtu', style: AppTextStyles.h2)
-                .animate()
-                .fadeIn(duration: 300.ms, delay: 160.ms),
+            // ── Description ───────────────────────────────────────────────
+            const _EyebrowLabel(label: 'Description'),
+            const SizedBox(height: AppSpacing.md),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (result.reportTypeLabel != null)
+                    Row(
+                      children: [
+                        const Icon(Icons.report_problem_outlined,
+                            size: 14, color: AppColors.textSecondary),
+                        const SizedBox(width: AppSpacing.xs),
+                        Text(result.reportTypeLabel!,
+                            style: AppTextStyles.monoSmall),
+                      ],
+                    ),
+                  if (result.reportTypeLabel != null)
+                    const SizedBox(height: AppSpacing.sm),
+                  Text(result.description, style: AppTextStyles.body),
+                ],
+              ),
+            ).animate().fadeIn(duration: 300.ms, delay: 80.ms),
 
+            const SizedBox(height: AppSpacing.xxl),
+
+            // ── Replies ───────────────────────────────────────────────────
+            const _EyebrowLabel(label: 'Échange'),
             const SizedBox(height: AppSpacing.md),
 
             if (result.replies.isEmpty)
-              _EmptyReplies().animate().fadeIn(duration: 300.ms, delay: 200.ms)
-            else
-              ...result.replies.asMap().entries.map(
-                    (e) => Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: ReplyBubble(
-                        message: e.value.message,
-                        replyDate: e.value.replyDate,
-                        index: e.key,
-                      ),
-                    ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.xxl),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.border,
+                    style: BorderStyle.solid,
                   ),
-
-            const SizedBox(height: AppSpacing.xxxl),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(Icons.hourglass_empty_rounded,
+                        size: 36, color: AppColors.textHint),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'En attente de traitement',
+                      style: AppTextStyles.h3
+                          .copyWith(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Nous reviendrons vers vous bientôt.',
+                      style: AppTextStyles.caption,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn(duration: 300.ms, delay: 160.ms)
+            else
+              ...result.replies.asMap().entries.map((e) {
+                final i = e.key;
+                final reply = e.value;
+                return _ReplyBubble(
+                  message: reply.message,
+                  replyDate: reply.replyDate,
+                  index: i,
+                )
+                    .animate()
+                    .fadeIn(
+                      duration: 300.ms,
+                      delay: Duration(milliseconds: 160 + i * 80),
+                    )
+                    .slideY(begin: 0.1, end: 0);
+              }),
           ],
         ),
       ),
@@ -132,112 +238,211 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 }
 
-// ── Status Card ───────────────────────────────────────────────────────────────
+// ── Trail Line ────────────────────────────────────────────────────────────────
 
-class _StatusCard extends StatelessWidget {
-  final dynamic result;
-  const _StatusCard({required this.result});
+class _TrailLine extends StatelessWidget {
+  final String statusCode;
+  const _TrailLine({required this.statusCode});
 
-  Color get _bgColor => switch (result.statusCode as String) {
-        'IN_PROGRESS' => AppColors.statusProgressBg,
-        'RESOLVED' => AppColors.statusResolvedBg,
-        'CLOSED' => AppColors.statusClosedBg,
-        _ => AppColors.statusNewBg,
-      };
-
-  Color get _textColor => switch (result.statusCode as String) {
-        'IN_PROGRESS' => AppColors.statusProgressText,
-        'RESOLVED' => AppColors.statusResolvedText,
-        'CLOSED' => AppColors.statusClosedText,
-        _ => AppColors.statusNewText,
-      };
-
-  IconData get _icon => switch (result.statusCode as String) {
-        'IN_PROGRESS' => Icons.pending_actions_rounded,
-        'RESOLVED' => Icons.check_circle_rounded,
-        'CLOSED' => Icons.lock_rounded,
-        _ => Icons.fiber_new_rounded,
-      };
+  List<_TrailStep> get _steps => [
+        const _TrailStep(
+          label: 'Envoyé',
+          sub: 'Reçu par l\'agence',
+          done: true,
+        ),
+        _TrailStep(
+          label: 'Pris en charge',
+          sub: 'Agent assigné',
+          done: statusCode == 'IN_PROGRESS' ||
+              statusCode == 'RESOLVED' ||
+              statusCode == 'CLOSED',
+        ),
+        _TrailStep(
+          label: 'Résolu',
+          sub: 'Incident clôturé',
+          done: statusCode == 'RESOLVED' || statusCode == 'CLOSED',
+        ),
+      ];
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      decoration: BoxDecoration(
-        color: _bgColor,
-        borderRadius: AppRadius.large,
-      ),
-      child: Row(
-        children: [
-          Icon(_icon, color: _textColor, size: 32),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  result.statusLabel as String,
-                  style: AppTextStyles.h2.copyWith(color: _textColor),
+    return Column(
+      children: _steps.asMap().entries.map((e) {
+        final i = e.key;
+        final step = e.value;
+        final isLast = i == _steps.length - 1;
+
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Line + dot
+              SizedBox(
+                width: 26,
+                child: Column(
+                  children: [
+                    Container(
+                      width: 13,
+                      height: 13,
+                      decoration: BoxDecoration(
+                        color:
+                            step.done ? AppColors.primary : AppColors.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color:
+                              step.done ? AppColors.primary : AppColors.border,
+                          width: step.done ? 3 : 1.5,
+                        ),
+                      ),
+                    ),
+                    if (!isLast)
+                      Expanded(
+                        child: Container(
+                          width: 2,
+                          margin: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.xs),
+                          decoration: BoxDecoration(
+                            color: step.done
+                                ? AppColors.primary
+                                : AppColors.border,
+                            borderRadius: BorderRadius.circular(1),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Mis à jour le ${DateFormatter.formatShort(result.creationDate as String)}',
-                  style: AppTextStyles.caption.copyWith(color: _textColor),
+              ),
+
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: AppSpacing.sm,
+                    bottom: isLast ? 0 : AppSpacing.lg,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        step.label,
+                        style: AppTextStyles.h3.copyWith(
+                          color: step.done
+                              ? AppColors.textPrimary
+                              : AppColors.textHint,
+                        ),
+                      ),
+                      Text(
+                        step.sub,
+                        style: AppTextStyles.caption,
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
 }
 
-// ── Info Card ─────────────────────────────────────────────────────────────────
+class _TrailStep {
+  final String label;
+  final String sub;
+  final bool done;
+  const _TrailStep({
+    required this.label,
+    required this.sub,
+    required this.done,
+  });
+}
 
-class _InfoCard extends StatelessWidget {
-  final dynamic result;
-  const _InfoCard({required this.result});
+// ── Reply Bubble ──────────────────────────────────────────────────────────────
+
+class _ReplyBubble extends StatelessWidget {
+  final String message;
+  final String replyDate;
+  final int index;
+
+  const _ReplyBubble({
+    required this.message,
+    required this.replyDate,
+    required this.index,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: AppRadius.large,
-        boxShadow: AppShadows.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.small,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (result.reportTypeLabel != null)
-            InfoRow(
-              icon: Icons.report_problem_outlined,
-              text: result.reportTypeLabel as String,
-            ),
-          if (result.supportLabel != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            InfoRow(
-              icon: Icons.directions_bus_outlined,
-              text: result.supportLabel as String,
-            ),
-          ],
-          const SizedBox(height: AppSpacing.md),
-          InfoRow(
-            icon: Icons.calendar_today_outlined,
-            text: DateFormatter.format(result.creationDate as String),
+          // Header
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  color: AppColors.railBlue,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    'AG',
+                    style: AppTextStyles.monoLabel.copyWith(
+                      color: Colors.white,
+                      fontSize: 9,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text('Agent Transtu', style: AppTextStyles.h3),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'PUBLIC',
+                  style: AppTextStyles.monoLabel.copyWith(
+                    color: AppColors.primaryDark,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 8,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const Divider(height: AppSpacing.xxl),
-          Text(
-            'Description',
-            style: AppTextStyles.h3,
-          ),
+
           const SizedBox(height: AppSpacing.sm),
+
+          // Message
+          Text(message,
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textSecondary,
+              )),
+
+          const SizedBox(height: AppSpacing.xs),
+
+          // Date
           Text(
-            result.description as String,
-            style: AppTextStyles.body,
+            DateFormatter.format(replyDate),
+            style: AppTextStyles.caption,
           ),
         ],
       ),
@@ -245,39 +450,38 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-// ── Empty Replies ─────────────────────────────────────────────────────────────
+// ── Eyebrow Label ─────────────────────────────────────────────────────────────
 
-class _EmptyReplies extends StatelessWidget {
+class _EyebrowLabel extends StatelessWidget {
+  final String label;
+  const _EyebrowLabel({required this.label});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.xxl),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.large,
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          const Icon(
-            Icons.hourglass_empty_rounded,
-            size: 40,
-            color: AppColors.textHint,
+    return Row(
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: AppTextStyles.monoLabel.copyWith(
+            color: AppColors.primaryDark,
+            fontWeight: FontWeight.w700,
           ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            'En attente de traitement',
-            style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.border,
+                  AppColors.border.withValues(alpha: 0),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Nous reviendrons vers vous bientôt.',
-            style: AppTextStyles.caption,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

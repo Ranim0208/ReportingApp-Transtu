@@ -7,7 +7,6 @@ import 'dart:convert';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_shadows.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/snackbar_helper.dart';
@@ -86,179 +85,195 @@ class _TrackEntryScreenState extends ConsumerState<TrackEntryScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Suivre un signalement'),
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded,
-              color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.only(bottom: 90),
+      body: SafeArea(
+        bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search card
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: AppRadius.large,
-                boxShadow: AppShadows.card,
+            // ── Header ────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                0,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Entrez votre référence',
-                    style: AppTextStyles.h3,
-                  ),
+                  Text('Mes signalements', style: AppTextStyles.display),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Vous trouverez l\'UUID dans l\'email de confirmation.',
-                    style: AppTextStyles.caption,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        size: 20,
-                        color: AppColors.textSecondary,
-                      ),
-                      suffixIcon: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (_controller.text.isNotEmpty)
-                            IconButton(
-                              icon: const Icon(Icons.clear_rounded, size: 18),
-                              onPressed: () =>
-                                  setState(() => _controller.clear()),
-                            ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.content_paste_rounded,
-                              size: 18,
-                              color: AppColors.primary,
-                            ),
-                            onPressed: _paste,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  ElevatedButton(
-                    onPressed:
-                        isLoading ? null : () => _track(_controller.text),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child: isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text('Rechercher'),
+                    'Suivez l\'avancement de chaque déclaration.',
+                    style: AppTextStyles.bodySmall,
                   ),
                 ],
               ),
             ),
 
-            // Recent reports
+            const SizedBox(height: AppSpacing.lg),
+
+            // ── Search bar ────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: AppShadows.card,
+                ),
+                child: Row(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: AppSpacing.md),
+                      child: Icon(
+                        Icons.search_rounded,
+                        color: AppColors.textSecondary,
+                        size: 18,
+                      ),
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        decoration: InputDecoration(
+                          hintText: 'Code ou référence (ex : SIG-20260807-…)',
+                          hintStyle: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textHint,
+                          ),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.md,
+                          ),
+                        ),
+                        style: AppTextStyles.body,
+                      ),
+                    ),
+                    if (_controller.text.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.clear_rounded,
+                            size: 16, color: AppColors.textHint),
+                        onPressed: () => setState(() => _controller.clear()),
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.content_paste_rounded,
+                          size: 16, color: AppColors.primary),
+                      onPressed: _paste,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Search hint ───────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                0,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline_rounded,
+                      size: 13, color: AppColors.textHint),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        text: 'Sans compte ? ',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Collez le code reçu par e-mail',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' — pas besoin de compte.',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.md),
+
+            // ── Search button ─────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: ElevatedButton(
+                onPressed: isLoading ? null : () => _track(_controller.text),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 46),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text('Rechercher'),
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.xl),
+
+            // ── Recent list ───────────────────────────────────────────────
             if (_recentReports.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.xxl),
-              Text('Récents', style: AppTextStyles.h2),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: _EyebrowLabel(label: 'Récents'),
+              ),
               const SizedBox(height: AppSpacing.md),
               Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: AppRadius.large,
-                    boxShadow: AppShadows.card,
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    0,
+                    AppSpacing.lg,
+                    90,
                   ),
-                  child: ListView.separated(
-                    padding: EdgeInsets.zero,
-                    itemCount: _recentReports.length,
-                    separatorBuilder: (_, __) =>
-                        const Divider(height: 1, indent: 68),
-                    itemBuilder: (_, i) {
-                      final report = _recentReports[i];
-                      return Dismissible(
-                        key: Key(report['uuid'] as String),
-                        direction: DismissDirection.endToStart,
-                        onDismissed: (_) => _removeRecent(i),
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          decoration: BoxDecoration(
-                            color: AppColors.errorLight,
-                            borderRadius: i == 0
-                                ? const BorderRadius.vertical(
-                                    top: Radius.circular(16))
-                                : i == _recentReports.length - 1
-                                    ? const BorderRadius.vertical(
-                                        bottom: Radius.circular(16))
-                                    : BorderRadius.zero,
-                          ),
-                          padding: const EdgeInsets.only(right: AppSpacing.lg),
-                          child: const Icon(Icons.delete_outline_rounded,
-                              color: AppColors.error),
+                  itemCount: _recentReports.length,
+                  itemBuilder: (_, i) {
+                    final report = _recentReports[i];
+                    return Dismissible(
+                      key: Key(report['uuid'] as String),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (_) => _removeRecent(i),
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: AppColors.errorLight,
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: ListTile(
-                          leading: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryLight,
-                              borderRadius: AppRadius.medium,
-                            ),
-                            child: const Icon(
-                              Icons.assignment_outlined,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                          ),
-                          title: Text(
-                            report['reference'] as String? ?? '',
-                            style: AppTextStyles.h3,
-                          ),
-                          subtitle: report['creationDate'] != null
-                              ? Text(
-                                  DateFormatter.formatShort(
-                                    report['creationDate'] as String,
-                                  ),
-                                  style: AppTextStyles.caption,
-                                )
-                              : null,
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              StatusBadge(
-                                statusCode:
-                                    report['statusCode'] as String? ?? 'NEW',
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              const Icon(
-                                Icons.chevron_right_rounded,
-                                color: AppColors.textSecondary,
-                                size: 20,
-                              ),
-                            ],
-                          ),
-                          onTap: () => _track(report['uuid'] as String),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: AppColors.error,
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                      child: _RecentTicket(
+                        report: report,
+                        onTap: () => _track(report['uuid'] as String),
+                      ),
+                    );
+                  },
                 ),
               ),
             ] else ...[
@@ -267,7 +282,7 @@ class _TrackEntryScreenState extends ConsumerState<TrackEntryScreen> {
                 child: Column(
                   children: [
                     const Icon(Icons.history_rounded,
-                        size: 56, color: AppColors.border),
+                        size: 48, color: AppColors.border),
                     const SizedBox(height: AppSpacing.md),
                     Text(
                       'Aucun signalement récent',
@@ -280,11 +295,116 @@ class _TrackEntryScreenState extends ConsumerState<TrackEntryScreen> {
               ),
               const Spacer(),
             ],
-
-            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Recent Ticket ─────────────────────────────────────────────────────────────
+
+class _RecentTicket extends StatelessWidget {
+  final Map<String, dynamic> report;
+  final VoidCallback onTap;
+
+  const _RecentTicket({required this.report, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppShadows.small,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.assignment_outlined,
+                color: AppColors.primary,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    report['reference'] as String? ?? '',
+                    style: AppTextStyles.h3,
+                  ),
+                  if (report['creationDate'] != null)
+                    Text(
+                      DateFormatter.formatShort(
+                          report['creationDate'] as String),
+                      style: AppTextStyles.caption,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            StatusBadge(
+              statusCode: report['statusCode'] as String? ?? 'NEW',
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Eyebrow Label ─────────────────────────────────────────────────────────────
+
+class _EyebrowLabel extends StatelessWidget {
+  final String label;
+  const _EyebrowLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: AppTextStyles.monoLabel.copyWith(
+            color: AppColors.primaryDark,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.border,
+                  AppColors.border.withValues(alpha: 0),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
